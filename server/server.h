@@ -1,0 +1,8 @@
+//
+// Created by erikm on 27. 12. 2025.
+//
+
+#ifndef UDSP_SEMESTRALKA_3_SERVER_H
+#define UDSP_SEMESTRALKA_3_SERVER_H
+
+#endif //UDSP_SEMESTRALKA_3_SERVER_H
