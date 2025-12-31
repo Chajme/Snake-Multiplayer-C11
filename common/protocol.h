@@ -17,6 +17,7 @@ typedef struct {
     int tail_length;
     int direction;
     int id;
+    int score;
     uint8_t r, g, b;
 } PlayerState;
 

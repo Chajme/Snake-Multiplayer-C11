@@ -29,15 +29,6 @@ size_t recv_all(int sock, void *buf, size_t len){
 
 void *network_thread(void *arg){
     while(1) {
-        // GameState newState;
-        // int bytes = recv_all(sockfd, &newState, sizeof(GameState));
-        // if(bytes <= 0) break;
-        //
-        // pthread_mutex_lock(&stateMutex);
-        // state = newState;
-        // player = state.players[playerId];
-        // hasState = 1;
-        // pthread_mutex_unlock(&stateMutex);
         ServerMessage msg;
         int bytes = recv_all(sockfd, &msg, sizeof(msg));
         if (bytes <= 0) {
@@ -46,6 +37,8 @@ void *network_thread(void *arg){
 
         if (msg.type == MSG_GAME_OVER) {
             printf("Game over!\n");
+            printf("You score was: %d\n", player.score);
+            player.score = 0;
             fflush(stdout);
             running = 0;
             return NULL;
@@ -125,12 +118,12 @@ int main(){
             DrawGame(r, playerId, &state);
         pthread_mutex_unlock(&stateMutex);
 
-
         SDL_Delay(50);
     }
 
     SDL_DestroyRenderer(r);
     SDL_DestroyWindow(win);
+    SDL_Delay(100);
     SDL_Quit();
     pthread_join(netThread, NULL);
     close(sockfd);

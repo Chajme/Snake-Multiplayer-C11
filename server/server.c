@@ -76,7 +76,6 @@ void *accept_thread(void *arg) {
         pthread_mutex_unlock(&gameMutex);
 
         send_all(client_fd, &id, sizeof(int));
-        // send_all(client_fd, &gameState, sizeof(GameState));
 
         ServerMessage msg;
         msg.type = MSG_STATE;
@@ -155,6 +154,7 @@ int main() {
                 p->tail_length++;
                 gameState.fruitX = rand() % GRID_WIDTH;
                 gameState.fruitY = rand() % GRID_HEIGHT;
+                p->score++;
             }
         }
 
