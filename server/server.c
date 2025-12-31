@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include "../common/protocol.h"
 #include "client_handler.h"
+#include "../game/game.h"
 
 GameState gameState;
 pthread_mutex_t gameMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -120,23 +121,27 @@ int main() {
         for (int i = 0; i < gameState.numPlayers; i++) {
             PlayerState *p = &gameState.players[i];
 
-            int prevX = p->x, prevY = p->y;
-
-            for (int t = p->tail_length - 1; t > 0; t--) {
-                p->tailX[t] = p->tailX[t - 1];
-                p->tailY[t] = p->tailY[t - 1];
+            if (UpdateGame(p)) {
+                printf("Game over");
+                break;
             }
-            if (p->tail_length > 0) {
-                p->tailX[0] = prevX;
-                p->tailY[0] = prevY;
-            }
-
-            switch (p->direction) {
-                case 1: p->x--; break;
-                case 2: p->x++; break;
-                case 3: p->y--; break;
-                case 4: p->y++; break;
-            }
+            // int prevX = p->x, prevY = p->y;
+            //
+            // for (int t = p->tail_length - 1; t > 0; t--) {
+            //     p->tailX[t] = p->tailX[t - 1];
+            //     p->tailY[t] = p->tailY[t - 1];
+            // }
+            // if (p->tail_length > 0) {
+            //     p->tailX[0] = prevX;
+            //     p->tailY[0] = prevY;
+            // }
+            //
+            // switch (p->direction) {
+            //     case 1: p->x--; break;
+            //     case 2: p->x++; break;
+            //     case 3: p->y--; break;
+            //     case 4: p->y++; break;
+            // }
 
             if (p->x < 0) p->x = GRID_WIDTH - 1;
             if (p->x >= GRID_WIDTH) p->x = 0;

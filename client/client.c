@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "../common/protocol.h"
-#include "game.h"
+#include "../client/game_render.h"
 
 PlayerState player;
 GameState state;

@@ -8,8 +8,8 @@
 #include <SDL2/SDL.h>
 #include "../common/protocol.h"
 
+int CheckSelfCollision(PlayerState *player);
 void ResetGame(PlayerState *player);
-void UpdateGame(PlayerState *player);
-void DrawGame(SDL_Renderer *r, int playerId, GameState *state);
+int UpdateGame(PlayerState *player);
 
 #endif //UDSP_SEMESTRALKA_3_GAME_H

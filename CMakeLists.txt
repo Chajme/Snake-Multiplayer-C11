@@ -9,6 +9,7 @@ include_directories(${SDL2_INCLUDE_DIRS} common)
 add_executable(server
         server/server.c
         server/client_handler.c
+        game/game.c
 )
 target_include_directories(server PRIVATE server common)
 target_link_libraries(server pthread)
@@ -16,7 +17,7 @@ target_link_libraries(server pthread)
 # Client
 add_executable(client
         client/client.c
-        client/game.c
+        client/game_render.c
 )
 target_include_directories(client PRIVATE client common)
 target_link_libraries(client ${SDL2_LIBRARIES} pthread)
