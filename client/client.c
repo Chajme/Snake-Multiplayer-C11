@@ -36,10 +36,14 @@ void *network_thread(void *arg){
         }
 
         if (msg.type == MSG_GAME_OVER) {
+            pthread_mutex_lock(&stateMutex);
+            int finalScore = player.score;
+            pthread_mutex_unlock(&stateMutex);
+
             printf("Game over!\n");
-            printf("You score was: %d\n", player.score);
-            player.score = 0;
+            printf("Your score was: %d\n", finalScore);
             fflush(stdout);
+
             running = 0;
             return NULL;
         }

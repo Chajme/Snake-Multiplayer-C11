@@ -1,5 +1,17 @@
 #include "game.h"
 
+void SetDirection(PlayerState *player, int newDirection) {
+    // Block opposite direction changes
+    if ((player->direction == LEFT  && newDirection == RIGHT) ||
+        (player->direction == RIGHT && newDirection == LEFT)  ||
+        (player->direction == UP    && newDirection == DOWN)  ||
+        (player->direction == DOWN  && newDirection == UP)) {
+        return; // ignore invalid turn
+        }
+
+    player->direction = newDirection;
+}
+
 int CheckSelfCollision(PlayerState *player) {
     for(int i = 0; i < player->tail_length; i++) {
         if(player->x == player->tailX[i] &&

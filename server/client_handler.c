@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <arpa/inet.h>
+#include  "../game/game.h"
 
-extern GameState gameState;  // from server.c
+extern GameState gameState;
 extern pthread_mutex_t gameMutex;
 
 void *handle_client(void *arg) {
@@ -18,7 +18,7 @@ void *handle_client(void *arg) {
 
         if(dir >= 1 && dir <= 4) {
             pthread_mutex_lock(&gameMutex);
-            gameState.players[info->playerId].direction = dir;
+            SetDirection(&gameState.players[info->playerId], dir);
             pthread_mutex_unlock(&gameMutex);
         }
     }

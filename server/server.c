@@ -43,8 +43,8 @@ void *accept_thread(void *arg) {
         }
 
         int id = gameState.numPlayers;
-        PlayerState *p = &gameState.players[id];
-        p->id = id;
+        PlayerState *player_state = &gameState.players[id];
+        player_state->id = id;
 
         static const uint8_t colors[][3] = {
             {0, 255, 0},     // green
@@ -55,19 +55,19 @@ void *accept_thread(void *arg) {
         };
 
         int colorIndex = id % 5;
-        p->r = colors[colorIndex][0];
-        p->g = colors[colorIndex][1];
-        p->b = colors[colorIndex][2];
+        player_state->r = colors[colorIndex][0];
+        player_state->g = colors[colorIndex][1];
+        player_state->b = colors[colorIndex][2];
 
 
-        p->x = rand() % GRID_WIDTH;
-        p->y = rand() % GRID_HEIGHT;
-        p->direction = 2;
-        p->tail_length = 3;
+        player_state->x = rand() % GRID_WIDTH;
+        player_state->y = rand() % GRID_HEIGHT;
+        player_state->direction = 2;
+        player_state->tail_length = 3;
 
-        for (int i = 0; i < p->tail_length; i++) {
-            p->tailX[i] = (p->x - (i + 1) + GRID_WIDTH) % GRID_WIDTH;
-            p->tailY[i] = p->y;
+        for (int i = 0; i < player_state->tail_length; i++) {
+            player_state->tailX[i] = (player_state->x - (i + 1) + GRID_WIDTH) % GRID_WIDTH;
+            player_state->tailY[i] = player_state->y;
         }
 
         clientSockets[id] = client_fd;
@@ -92,7 +92,6 @@ void *accept_thread(void *arg) {
 
         printf("Client %d connected\n", id);
     }
-    return NULL;
 }
 
 /* ---------- MAIN ---------- */
