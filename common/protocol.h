@@ -16,6 +16,7 @@ typedef struct {
     int tailX[MAX_TAIL], tailY[MAX_TAIL];
     int tail_length;
     int direction;
+    int id;
     uint8_t r, g, b;
 } PlayerState;
 
@@ -24,5 +25,17 @@ typedef struct {
     int numPlayers;
     int fruitX, fruitY;
 } GameState;
+
+
+// Network messages
+typedef enum {
+    MSG_STATE = 1,
+    MSG_GAME_OVER = 2
+} MessageType;
+
+typedef struct {
+    MessageType type;
+    GameState state;
+} ServerMessage;
 
 #endif //UDSP_SEMESTRALKA_3_PROTOCOL_H

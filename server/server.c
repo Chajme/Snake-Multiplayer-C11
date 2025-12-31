@@ -44,6 +44,7 @@ void *accept_thread(void *arg) {
 
         int id = gameState.numPlayers;
         PlayerState *p = &gameState.players[id];
+        p->id = id;
 
         static const uint8_t colors[][3] = {
             {0, 255, 0},     // green
@@ -75,7 +76,12 @@ void *accept_thread(void *arg) {
         pthread_mutex_unlock(&gameMutex);
 
         send_all(client_fd, &id, sizeof(int));
-        send_all(client_fd, &gameState, sizeof(GameState));
+        // send_all(client_fd, &gameState, sizeof(GameState));
+
+        ServerMessage msg;
+        msg.type = MSG_STATE;
+        msg.state = gameState;
+        send_all(client_fd, &msg, sizeof(msg));
 
         ClientInfo *info = malloc(sizeof(ClientInfo));
         info->socket = client_fd;
@@ -122,26 +128,23 @@ int main() {
             PlayerState *p = &gameState.players[i];
 
             if (UpdateGame(p)) {
-                printf("Game over");
-                break;
+                printf("Player %d died\n", i);
+
+                ServerMessage msg;
+                msg.type = MSG_GAME_OVER;
+                send_all(clientSockets[i], &msg, sizeof(msg));
+
+                close(clientSockets[i]);
+
+                for (int j = i; j < gameState.numPlayers - 1; ++j) {
+                    gameState.players[j] = gameState.players[j + 1];
+                    clientSockets[j] = clientSockets[j + 1];
+                }
+
+                --gameState.numPlayers;
+                --i;
+                continue;
             }
-            // int prevX = p->x, prevY = p->y;
-            //
-            // for (int t = p->tail_length - 1; t > 0; t--) {
-            //     p->tailX[t] = p->tailX[t - 1];
-            //     p->tailY[t] = p->tailY[t - 1];
-            // }
-            // if (p->tail_length > 0) {
-            //     p->tailX[0] = prevX;
-            //     p->tailY[0] = prevY;
-            // }
-            //
-            // switch (p->direction) {
-            //     case 1: p->x--; break;
-            //     case 2: p->x++; break;
-            //     case 3: p->y--; break;
-            //     case 4: p->y++; break;
-            // }
 
             if (p->x < 0) p->x = GRID_WIDTH - 1;
             if (p->x >= GRID_WIDTH) p->x = 0;
@@ -156,7 +159,12 @@ int main() {
         }
 
         for (int i = 0; i < gameState.numPlayers; i++) {
-            send_all(clientSockets[i], &gameState, sizeof(GameState));
+            //send_all(clientSockets[i], &gameState, sizeof(GameState));
+            ServerMessage msg;
+            msg.type = MSG_STATE;
+            msg.state = gameState;
+
+            send_all(clientSockets[i], &msg, sizeof(msg));
         }
 
         pthread_mutex_unlock(&gameMutex);

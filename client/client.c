@@ -14,6 +14,7 @@ pthread_mutex_t stateMutex = PTHREAD_MUTEX_INITIALIZER;
 int playerId = 0;
 int hasState = 0;
 
+volatile int running = 1;
 
 size_t recv_all(int sock, void *buf, size_t len){
     size_t total = 0;
@@ -27,17 +28,36 @@ size_t recv_all(int sock, void *buf, size_t len){
 }
 
 void *network_thread(void *arg){
-    while(1){
-        GameState newState;
-        int bytes = recv_all(sockfd, &newState, sizeof(GameState));
-        if(bytes <= 0) break;
+    while(1) {
+        // GameState newState;
+        // int bytes = recv_all(sockfd, &newState, sizeof(GameState));
+        // if(bytes <= 0) break;
+        //
+        // pthread_mutex_lock(&stateMutex);
+        // state = newState;
+        // player = state.players[playerId];
+        // hasState = 1;
+        // pthread_mutex_unlock(&stateMutex);
+        ServerMessage msg;
+        int bytes = recv_all(sockfd, &msg, sizeof(msg));
+        if (bytes <= 0) {
+            break;
+        }
 
-        pthread_mutex_lock(&stateMutex);
-        state = newState;
-        player = state.players[playerId];
-        hasState = 1;
-        pthread_mutex_unlock(&stateMutex);
+        if (msg.type == MSG_GAME_OVER) {
+            printf("Game over!\n");
+            fflush(stdout);
+            running = 0;
+            return NULL;
+        }
 
+        if (msg.type == MSG_STATE) {
+            pthread_mutex_lock(&stateMutex);
+            state = msg.state;
+            player = state.players[playerId];
+            hasState = 1;
+            pthread_mutex_unlock(&stateMutex);
+        }
     }
     return NULL;
 }
@@ -78,7 +98,6 @@ int main(){
     pthread_create(&netThread, NULL, network_thread, NULL);
 
     SDL_Event e;
-    int running=1;
     while(running){
         while(SDL_PollEvent(&e)){
             if(e.type==SDL_QUIT) running=0;
@@ -113,6 +132,7 @@ int main(){
     SDL_DestroyRenderer(r);
     SDL_DestroyWindow(win);
     SDL_Quit();
+    pthread_join(netThread, NULL);
     close(sockfd);
     return 0;
 }
