@@ -1,11 +1,11 @@
-#include "client_handler.h"
+#include "../include/client_handler.h"
 
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include  "../game/game.h"
+#include "../include/game.h"
 
 extern GameState gameState;
 extern pthread_mutex_t gameMutex;

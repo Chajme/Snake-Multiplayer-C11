@@ -234,11 +234,11 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 #include <signal.h>
-#include "../common/protocol.h"
-#include "client_handler.h"
-#include "server_network.h"
-#include "../game/game.h"
-#include "server.h"
+#include "../include/protocol.h"
+#include "../include/client_handler.h"
+#include "../include/server_network.h"
+#include "../include/game.h"
+#include "../include/server.h"
 
 volatile sig_atomic_t server_running = 1;
 GameState gameState;

@@ -2,7 +2,7 @@
 #define UDSP_SEMESTRALKA_3_GAME_H
 
 #include <SDL2/SDL.h>
-#include "../common/protocol.h"
+#include "protocol.h"
 
 #define LEFT 1
 #define RIGHT 2

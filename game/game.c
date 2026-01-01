@@ -1,4 +1,4 @@
-#include "game.h"
+#include "../include/game.h"
 
 void SetDirection(PlayerState *player, int newDirection) {
     // Block opposite direction changes

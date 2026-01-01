@@ -1,4 +1,4 @@
-#include  "game_render.h"
+#include "../include/game_render.h"
 
 void DrawGame(SDL_Renderer *r, int playerId, GameState *state) {
     // Clear screen first

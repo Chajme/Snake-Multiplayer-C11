@@ -4,7 +4,7 @@
 
 #include <bits/pthreadtypes.h>
 
-#include "../common/protocol.h"
+#include "protocol.h"
 #include "client_network.h"
 
 typedef struct {

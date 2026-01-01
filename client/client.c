@@ -197,10 +197,10 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-#include "client_network.h"
-#include "game_render.h"
-#include "../common/protocol.h"
-#include "client.h"
+#include "../include/client_network.h"
+#include "../include/game_render.h"
+#include "../include/protocol.h"
+#include "../include/client.h"
 
 void *network_thread(void *arg) {
     ClientData *data = arg;
@@ -231,21 +231,22 @@ void *network_thread(void *arg) {
 }
 
 void HandleInput(ClientData *data) {
-    SDL_Event e;
-    while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_QUIT)
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT)
             data->running = 0;
 
-        if (e.type == SDL_KEYDOWN) {
+        if (event.type == SDL_KEYDOWN) {
             uint8_t dir = 0;
-            switch (e.key.keysym.sym) {
+            switch (event.key.keysym.sym) {
                 case SDLK_a: dir = LEFT; break;
                 case SDLK_d: dir = RIGHT; break;
                 case SDLK_w: dir = UP; break;
                 case SDLK_s: dir = DOWN; break;
             }
-            if (dir)
+            if (dir) {
                 SendDirection(&data->net, dir);
+            }
         }
     }
 }
@@ -262,7 +263,9 @@ int main(void) {
         return 1;
     }
 
-    SDL_Init(SDL_INIT_VIDEO);
+    if(SDL_Init(SDL_INIT_VIDEO) < 0){
+        return 1;
+    }
 
     SDL_Window *win = SDL_CreateWindow(
         "Snake Client",

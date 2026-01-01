@@ -1,7 +1,7 @@
 #ifndef UDSP_SEMESTRALKA_3_CLIENT_NETWORK_H
 #define UDSP_SEMESTRALKA_3_CLIENT_NETWORK_H
 
-#include "../common/protocol.h"
+#include "protocol.h"
 #include <stdint.h>
 
 typedef struct {

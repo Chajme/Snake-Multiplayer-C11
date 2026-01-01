@@ -1,7 +1,7 @@
 #ifndef UDSP_SEMESTRALKA_3_SERVER_H
 #define UDSP_SEMESTRALKA_3_SERVER_H
 
-#include "../common/protocol.h"
+#include "protocol.h"
 #include <signal.h>
 #include <pthread.h>
 

@@ -1,5 +1,5 @@
 // client_network.c
-#include "client_network.h"
+#include "../include/client_network.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -18,7 +18,9 @@ static size_t recv_all(int sock, void *buf, size_t len){
 
 int ConnectToServer(ClientNet *net, const char *ip, int port){
     net->sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(net->sockfd < 0) return -1;
+    if(net->sockfd < 0) {
+        return -1;
+    }
     struct sockaddr_in addr = {0};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);

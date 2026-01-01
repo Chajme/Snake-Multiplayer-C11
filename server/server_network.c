@@ -1,5 +1,5 @@
 // server_network.c
-#include "server_network.h"
+#include "../include/server_network.h"
 #include <sys/socket.h>
 #include <string.h>
 
