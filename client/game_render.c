@@ -20,7 +20,7 @@ void DrawGame(SDL_Renderer *r, int playerId, GameState *state) {
     SDL_RenderFillRect(r, &rect);
 
     // Draw all players
-    for(int i = 0; i < state->numPlayers; i++) {
+    for(int i = 0; i < MAX_CLIENTS; i++) {
         if (!state->players[i].alive) continue;
         SDL_SetRenderDrawColor(
             r,
@@ -36,7 +36,9 @@ void DrawGame(SDL_Renderer *r, int playerId, GameState *state) {
         SDL_RenderFillRect(r, &rect);
 
         // Draw tail
-        for(int t = 0; t < state->players[i].tail_length; t++){
+        int len = state->players[i].tail_length;
+        if (len > MAX_TAIL) len = MAX_TAIL;
+        for(int t = 0; t < len; t++){
             rect.x = state->players[i].tailX[t] * CELL_SIZE;
             rect.y = state->players[i].tailY[t] * CELL_SIZE;
             SDL_RenderFillRect(r, &rect);

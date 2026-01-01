@@ -41,12 +41,19 @@ int UpdateGame(PlayerState *player) {
         player->tailY[0] = prevY;
     }
 
-    switch(player->direction){
-        case 1: player->x--; break; // left
-        case 2: player->x++; break; // right
-        case 3: player->y--; break; // up
-        case 4: player->y++; break; // down
+    switch (player->direction) {
+        case LEFT:  player->x--; break;
+        case RIGHT: player->x++; break;
+        case UP:    player->y--; break;
+        case DOWN:  player->y++; break;
     }
+
+    /* Wrap around */
+    if (player->x < 0) player->x = GRID_WIDTH - 1;
+    if (player->x >= GRID_WIDTH) player->x = 0;
+    if (player->y < 0) player->y = GRID_HEIGHT - 1;
+    if (player->y >= GRID_HEIGHT) player->y = 0;
+
 
     if(CheckSelfCollision(player)) {
         ResetGame(player);
