@@ -28,10 +28,11 @@ size_t recv_all(int sock, void *buf, size_t len){
 }
 
 void *network_thread(void *arg){
-    while(1) {
+    while(running) {
         ServerMessage msg;
         int bytes = recv_all(sockfd, &msg, sizeof(msg));
         if (bytes <= 0) {
+            running = 0;
             break;
         }
 
@@ -92,7 +93,12 @@ int main(){
     SDL_SetWindowTitle(win, title);
 
     pthread_t netThread;
-    pthread_create(&netThread, NULL, network_thread, NULL);
+    if (pthread_create(&netThread, NULL, network_thread, NULL) != 0) {
+        perror("pthread_create");
+        close(sockfd);
+        return -1;
+    }
+
 
     SDL_Event e;
     while(running){
@@ -125,11 +131,14 @@ int main(){
         SDL_Delay(50);
     }
 
+    running = 0;
+    shutdown(sockfd, SHUT_RDWR);
+    pthread_join(netThread, NULL);
+    close(sockfd);
+
     SDL_DestroyRenderer(r);
     SDL_DestroyWindow(win);
     SDL_Delay(100);
     SDL_Quit();
-    pthread_join(netThread, NULL);
-    close(sockfd);
     return 0;
 }

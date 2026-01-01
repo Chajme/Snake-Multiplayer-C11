@@ -18,6 +18,7 @@ typedef struct {
     int direction;
     int id;
     int score;
+    int alive;
     uint8_t r, g, b;
 } PlayerState;
 

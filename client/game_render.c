@@ -21,6 +21,7 @@ void DrawGame(SDL_Renderer *r, int playerId, GameState *state) {
 
     // Draw all players
     for(int i = 0; i < state->numPlayers; i++) {
+        if (!state->players[i].alive) continue;
         SDL_SetRenderDrawColor(
             r,
             state->players[i].r,
