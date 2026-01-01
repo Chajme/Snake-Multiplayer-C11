@@ -37,7 +37,9 @@ void DrawGame(SDL_Renderer *r, int playerId, GameState *state) {
 
         // Draw tail
         int len = state->players[i].tail_length;
+        if (len < 0) len = 0;
         if (len > MAX_TAIL) len = MAX_TAIL;
+
         for(int t = 0; t < len; t++){
             rect.x = state->players[i].tailX[t] * CELL_SIZE;
             rect.y = state->players[i].tailY[t] * CELL_SIZE;

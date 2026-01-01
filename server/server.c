@@ -363,7 +363,7 @@ int main(void) {
             PlayerState *p = &gameState.players[i];
             if (!p->alive) continue;
 
-            if (UpdateGame(p)) {
+            if (UpdateGame(p, &gameState)) {
                 ServerMessage msg = {.type = MSG_GAME_OVER};
                 send_all(clientSockets[i], &msg, sizeof(msg));
                 shutdown(clientSockets[i], SHUT_RDWR);

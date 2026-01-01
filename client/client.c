@@ -207,14 +207,23 @@ void *network_thread(void *arg) {
 
     while (data->running) {
         pthread_mutex_lock(&data->mutex);
+        // int res = ReceiveGameState(&data->net, &data->state);
         int res = ReceiveGameState(&data->net, &data->state);
-        pthread_mutex_unlock(&data->mutex);
-
         if (res <= 0) {
             printf("Disconnected from server\n");
             data->running = 0;
+            pthread_mutex_unlock(&data->mutex);
             break;
         }
+
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (data->state.players[i].tail_length < 0)
+                data->state.players[i].tail_length = 0;
+            if (data->state.players[i].tail_length > MAX_TAIL)
+                data->state.players[i].tail_length = MAX_TAIL;
+        }
+
+        pthread_mutex_unlock(&data->mutex);
 
         usleep(5000);
     }
@@ -245,6 +254,8 @@ int main(void) {
     ClientData client = {0};
     client.running = 1;
     pthread_mutex_init(&client.mutex, NULL);
+
+    memset(&client.state, 0, sizeof(GameState));
 
     if (ConnectToServer(&client.net, "127.0.0.1", PORT) < 0) {
         fprintf(stderr, "Failed to connect\n");

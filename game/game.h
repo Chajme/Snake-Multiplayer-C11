@@ -12,6 +12,6 @@
 void SetDirection(PlayerState *player, int newDirection);
 int CheckSelfCollision(PlayerState *player);
 void ResetGame(PlayerState *player);
-int UpdateGame(PlayerState *player);
+int UpdateGame(PlayerState *player, GameState *state);
 
 #endif //UDSP_SEMESTRALKA_3_GAME_H

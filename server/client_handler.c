@@ -1,4 +1,6 @@
 #include "client_handler.h"
+
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -14,7 +16,16 @@ void *handle_client(void *arg) {
 
     while(1){
         size_t n = recv(info->socket, &dir, sizeof(dir), 0);
-        if(n <= 0) break;
+        if(n <= 0) {
+            // Client disconnected, mark player as dead
+            pthread_mutex_lock(&gameMutex);
+            gameState.players[info->playerId].alive = 0;
+            pthread_mutex_unlock(&gameMutex);
+
+            printf("Client %d disconnected\n", info->playerId);
+
+            break;
+        }
 
         if(dir >= 1 && dir <= 4) {
             pthread_mutex_lock(&gameMutex);
@@ -23,6 +34,7 @@ void *handle_client(void *arg) {
         }
     }
 
+    shutdown(info->socket, SHUT_RDWR);
     close(info->socket);
     free(info);
     return NULL;
