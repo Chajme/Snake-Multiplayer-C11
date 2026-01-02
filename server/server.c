@@ -108,9 +108,15 @@ void server_destroy(Server* srv) {
     srv->running = false;
     close(srv->server_fd);
 
-    for (int i = 0; i < MAX_CLIENTS; i++)
-        if (srv->client_fds[i] != -1)
+    // Join all threads before cleaning up
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (srv->client_fds[i] != -1) {
             close(srv->client_fds[i]);
+            if (pthread_join(srv->threads[i], NULL) != 0) {
+                perror("Failed to join client thread");
+            }
+        }
+    }
 
     pthread_mutex_destroy(&srv->lock);
     free(srv);

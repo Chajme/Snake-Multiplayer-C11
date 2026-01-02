@@ -4,7 +4,7 @@
 #pragma once
 #include <stdbool.h>
 
-#define MAX_SNAKES 4
+#define MAX_SNAKES 5
 #define MAX_LENGTH 64
 
 typedef struct {

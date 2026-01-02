@@ -187,7 +187,7 @@ void gamestate_set_snake_segment(GameState* state, int snake_idx, int segment_id
 }
 
 
-void gamestate_serialize(const GameState* state, SerializedGameState* out) {
+void gamestate_serialize(GameState* state, SerializedGameState* out) {
     out->num_snakes = gamestate_get_num_snakes(state);
     for (int i = 0; i < out->num_snakes; i++) {
         out->snake_lengths[i] = gamestate_get_snake_length(state, i);
