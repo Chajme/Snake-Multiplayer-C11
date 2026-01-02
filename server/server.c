@@ -1,401 +1,249 @@
-// #include <errno.h>
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
-// #include <unistd.h>
-// #include <arpa/inet.h>
-// #include <pthread.h>
-// #include "../common/protocol.h"
-// #include "client_handler.h"
-// #include "../game/game.h"
-// #include <signal.h>
-//
-// volatile sig_atomic_t server_running = 1;
-//
-// GameState gameState;
-// pthread_mutex_t gameMutex = PTHREAD_MUTEX_INITIALIZER;
-// int clientSockets[MAX_CLIENTS];
-// int server_fd;
-//
-// void handle_sigint(int sig) {
-//     (void)sig;
-//     server_running = 0;
-//     shutdown(server_fd, SHUT_RDWR);
-// }
-//
-// size_t send_all(int sock, void *buf, size_t len) {
-//     size_t total = 0;
-//     char *p = buf;
-//     while (total < len) {
-//         ssize_t n = send(sock, p + total, len - total, 0);
-//         if (n <= 0) return n;
-//         total += n;
-//     }
-//     return total;
-// }
-//
-// /* ---------- CLIENT ACCEPT THREAD ---------- */
-// void *accept_thread(void *arg) {
-//     server_fd = *(int *)arg;
-//
-//     while (server_running) {
-//         struct sockaddr_in clientAddr;
-//         socklen_t len = sizeof(clientAddr);
-//         int client_fd = accept(server_fd, (struct sockaddr*)&clientAddr, &len);
-//         if (client_fd < 0) {
-//             if (!server_running) break;
-//             if (errno == EINTR) continue; // interrupted by signal, retry
-//             perror("accept");
-//             continue;
-//         }
-//
-//         pthread_mutex_lock(&gameMutex);
-//
-//         if (gameState.numPlayers >= MAX_CLIENTS) {
-//             pthread_mutex_unlock(&gameMutex);
-//             close(client_fd);
-//             continue;
-//         }
-//
-//         int id = gameState.numPlayers;
-//         PlayerState *player_state = &gameState.players[id];
-//         player_state->id = id;
-//         player_state->alive = 1;
-//
-//         static const uint8_t colors[][3] = {
-//             {0, 255, 0},     // green
-//             {0, 0, 255},     // blue
-//             {255, 255, 0},   // yellow
-//             {255, 0, 255},   // magenta
-//             {0, 255, 255},   // cyan
-//         };
-//
-//         int colorIndex = id % 5;
-//         player_state->r = colors[colorIndex][0];
-//         player_state->g = colors[colorIndex][1];
-//         player_state->b = colors[colorIndex][2];
-//
-//
-//         player_state->x = rand() % GRID_WIDTH;
-//         player_state->y = rand() % GRID_HEIGHT;
-//         player_state->direction = 2;
-//         player_state->tail_length = 3;
-//
-//         for (int i = 0; i < player_state->tail_length; i++) {
-//             player_state->tailX[i] = (player_state->x - (i + 1) + GRID_WIDTH) % GRID_WIDTH;
-//             player_state->tailY[i] = player_state->y;
-//         }
-//
-//         clientSockets[id] = client_fd;
-//         gameState.numPlayers++;
-//
-//         pthread_mutex_unlock(&gameMutex);
-//
-//         send_all(client_fd, &id, sizeof(int));
-//
-//         ServerMessage msg;
-//         memset(&msg, 0, sizeof(msg));
-//         msg.type = MSG_STATE;
-//         msg.state = gameState;
-//         send_all(client_fd, &msg, sizeof(msg));
-//
-//         ClientInfo *info = malloc(sizeof(ClientInfo));
-//         if (!info) {
-//             close(client_fd);
-//             pthread_mutex_unlock(&gameMutex);
-//             continue;
-//         }
-//
-//         info->socket = client_fd;
-//         info->playerId = id;
-//
-//         pthread_t t;
-//         if (pthread_create(&t, NULL, handle_client, info) != 0) {
-//             perror("pthread_create");
-//             close(client_fd);
-//             free(info);
-//             pthread_mutex_unlock(&gameMutex);
-//             continue;
-//         }
-//         pthread_detach(t);
-//
-//         printf("Client %d connected\n", id);
-//     }
-//     printf("Accept thread exiting\n");
-//     return NULL;
-// }
-//
-// /* ---------- MAIN ---------- */
-// int main() {
-//     signal(SIGINT, handle_sigint);
-//     srand(time(NULL));
-//
-//     memset(&gameState, 0, sizeof(GameState));
-//
-//
-//     // Initialize each player
-//     for (int i = 0; i < MAX_CLIENTS; i++) {
-//         gameState.players[i].alive = 0;
-//         gameState.players[i].tail_length = 0;
-//
-//         // Initialize tail arrays to avoid uninitialized memory
-//         for (int t = 0; t < MAX_TAIL; t++) {
-//             gameState.players[i].tailX[t] = 0;
-//             gameState.players[i].tailY[t] = 0;
-//         }
-//     }
-//
-//     // Initialize fruit position
-//     gameState.fruitX = rand() % GRID_WIDTH;
-//     gameState.fruitY = rand() % GRID_HEIGHT;
-//
-//     server_fd = socket(AF_INET, SOCK_STREAM, 0);
-//     int opt = 1;
-//     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-//
-//     struct sockaddr_in addr = {0};
-//     addr.sin_family = AF_INET;
-//     addr.sin_addr.s_addr = INADDR_ANY;
-//     addr.sin_port = htons(PORT);
-//
-//     bind(server_fd, (struct sockaddr*)&addr, sizeof(addr));
-//     listen(server_fd, MAX_CLIENTS);
-//
-//     pthread_t acceptThread;
-//     pthread_create(&acceptThread, NULL, accept_thread, &server_fd);
-//
-//     /* ---------- GAME LOOP ---------- */
-//     while (server_running) {
-//         usleep(200000);
-//
-//         pthread_mutex_lock(&gameMutex);
-//
-//         for (int i = 0; i < gameState.numPlayers; i++) {
-//             PlayerState *p = &gameState.players[i];
-//             if (!p->alive) continue;
-//
-//             if (UpdateGame(p)) {
-//                 printf("Player %d died\n", i);
-//                 ServerMessage msg;
-//                 memset(&msg, 0, sizeof(msg));
-//                 msg.type = MSG_GAME_OVER;
-//                 send_all(clientSockets[i], &msg, sizeof(msg));
-//
-//                 /* Close connection */
-//                 shutdown(clientSockets[i], SHUT_RDWR);
-//                 close(clientSockets[i]);
-//
-//                 gameState.players[i].alive = 0;
-//                 continue;
-//             }
-//
-//             if (p->x < 0) p->x = GRID_WIDTH - 1;
-//             if (p->x >= GRID_WIDTH) p->x = 0;
-//             if (p->y < 0) p->y = GRID_HEIGHT - 1;
-//             if (p->y >= GRID_HEIGHT) p->y = 0;
-//
-//             if (p->x == gameState.fruitX && p->y == gameState.fruitY) {
-//                 p->tail_length++;
-//                 gameState.fruitX = rand() % GRID_WIDTH;
-//                 gameState.fruitY = rand() % GRID_HEIGHT;
-//                 p->score++;
-//             }
-//         }
-//
-//         for (int i = 0; i < gameState.numPlayers; i++) {
-//             //send_all(clientSockets[i], &gameState, sizeof(GameState));
-//             ServerMessage msg;
-//             memset(&msg, 0, sizeof(msg));
-//             msg.type = MSG_STATE;
-//             msg.state = gameState;
-//
-//             send_all(clientSockets[i], &msg, sizeof(msg));
-//         }
-//
-//         pthread_mutex_unlock(&gameMutex);
-//     }
-//
-//     close(server_fd);
-//     pthread_join(acceptThread, NULL);
-//
-//     for (int i = 0; i < gameState.numPlayers; i++) {
-//         if (gameState.players[i].alive) {
-//             shutdown(clientSockets[i], SHUT_RDWR);
-//             close(clientSockets[i]);
-//         }
-//     }
-//     printf("Server shutdown complete\n");
-// }
-// server/server.c
-#include <stdio.h>
+#include "server.h"
+#include "../game/game.h"             // defines Game and GameState, game logic
+#include "../common/game_protocol.h"  // defines SerializedGameState
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <arpa/inet.h>
-#include <signal.h>
-#include "../include/protocol.h"
-#include "../include/client_handler.h"
-#include "../include/server_network.h"
-#include "../include/game.h"
-#include "../include/server.h"
 
-volatile sig_atomic_t server_running = 1;
-GameState gameState;
-pthread_mutex_t gameMutex = PTHREAD_MUTEX_INITIALIZER;
-int clientSockets[MAX_CLIENTS];
-int server_fd;
+struct Server {
+    int port;
+    int server_fd;
+    int client_fds[MAX_CLIENTS];
+    pthread_t threads[MAX_CLIENTS];
+    pthread_mutex_t lock;
+    bool running;
 
-void handle_sigint(int sig) {
-    (void)sig;
-    server_running = 0;
-    shutdown(server_fd, SHUT_RDWR);
-}
+    // Simple input queue
+    int input_client_idx[1024];
+    int input_value[1024];
+    int input_head;
+    int input_tail;
+};
 
-static int find_free_player_slot(void) {
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (!gameState.players[i].alive)
-            return i;
+typedef struct {
+    Server* server;
+    int client_idx;
+} ClientThreadData;
+
+static void *client_thread(void *arg) {
+    ClientThreadData *data = (ClientThreadData*)arg;
+    Server *srv = data->server;
+    int idx = data->client_idx;
+    free(data);
+
+    char buffer[BUFFER_SIZE];
+
+    while (srv->running) {
+        int n = read(srv->client_fds[idx], buffer, sizeof(buffer - 1));
+        if (n <= 0) break;
+
+        buffer[n] = '\0';
+        int input = atoi(buffer);
+        server_push_input(srv, idx, input);
     }
-    return -1;
-}
 
+    close(srv->client_fds[idx]);
 
-void *accept_thread(void *arg) {
-    server_fd = *(int *)arg;
-
-    while (server_running) {
-        struct sockaddr_in addr;
-        socklen_t len = sizeof(addr);
-        int client_fd = accept(server_fd, (struct sockaddr *)&addr, &len);
-
-        if (client_fd < 0) {
-            if (!server_running) break;
-            continue;
-        }
-
-        pthread_mutex_lock(&gameMutex);
-
-        if (gameState.numPlayers >= MAX_CLIENTS) {
-            pthread_mutex_unlock(&gameMutex);
-            close(client_fd);
-            continue;
-        }
-
-        int id = find_free_player_slot();
-        if (id == -1) {
-            pthread_mutex_unlock(&gameMutex);
-            close(client_fd);
-            continue;
-        }
-
-        PlayerState *p = &gameState.players[id];
-        memset(p, 0, sizeof(*p));
-
-        p->id = id;
-        p->alive = 1;
-        p->x = rand() % GRID_WIDTH;
-        p->y = rand() % GRID_HEIGHT;
-        p->direction = RIGHT;
-        p->tail_length = 3;
-
-        static const uint8_t colors[][3] = {
-            {0,255,0},{0,0,255},{255,255,0},{255,0,255},{0,255,255}
-        };
-        p->r = colors[id % 5][0];
-        p->g = colors[id % 5][1];
-        p->b = colors[id % 5][2];
-
-        for (int i = 0; i < p->tail_length; i++) {
-            p->tailX[i] = (p->x - (i + 1) + GRID_WIDTH) % GRID_WIDTH;
-            p->tailY[i] = p->y;
-        }
-
-        clientSockets[id] = client_fd;
-
-        pthread_mutex_unlock(&gameMutex);
-
-        send_all(client_fd, &id, sizeof(int));
-
-        ClientInfo *info = malloc(sizeof(ClientInfo));
-        info->socket = client_fd;
-        info->playerId = id;
-
-        pthread_t t;
-        pthread_create(&t, NULL, handle_client, info);
-        pthread_detach(t);
-
-        printf("Client %d connected\n", id);
-    }
+    pthread_mutex_lock(&srv->lock);
+    srv->client_fds[idx] = -1;
+    pthread_mutex_unlock(&srv->lock);
 
     return NULL;
 }
 
-int main(void) {
-    signal(SIGINT, handle_sigint);
-    srand(time(NULL));
+static void* server_start_thread(void* arg) {
+    server_start((Server*)arg);
+    return NULL;
+}
 
-    memset(&gameState, 0, sizeof(gameState));
-    gameState.fruitX = rand() % GRID_WIDTH;
-    gameState.fruitY = rand() % GRID_HEIGHT;
+Server* server_create(int port) {
+    Server* srv = calloc(1, sizeof(Server));
+    srv->port = port;
+    srv->running = true;
+    pthread_mutex_init(&srv->lock, NULL);
 
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    for (int i = 0; i < MAX_CLIENTS; i++)
+        srv->client_fds[i] = -1;
+
+    srv->server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (srv->server_fd < 0) {
+        perror("Socket creation failed");
+        free(srv);
+        return NULL;
+    }
+
     int opt = 1;
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    setsockopt(srv->server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    struct sockaddr_in addr = {0};
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port = htons(PORT);
+    addr.sin_port = htons(port);
 
-    bind(server_fd, (struct sockaddr *)&addr, sizeof(addr));
-    listen(server_fd, MAX_CLIENTS);
+    if (bind(srv->server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("Bind failed");
+        close(srv->server_fd);
+        free(srv);
+        return NULL;
+    }
 
-    pthread_t acceptThread;
-    pthread_create(&acceptThread, NULL, accept_thread, &server_fd);
+    if (listen(srv->server_fd, MAX_CLIENTS) < 0) {
+        perror("Listen failed");
+        close(srv->server_fd);
+        free(srv);
+        return NULL;
+    }
 
-    while (server_running) {
-        usleep(200000);
+    printf("Server listening on port %d\n", port);
+    return srv;
+}
 
-        pthread_mutex_lock(&gameMutex);
+void server_destroy(Server* srv) {
+    if (!srv) return;
 
+    srv->running = false;
+    close(srv->server_fd);
+
+    for (int i = 0; i < MAX_CLIENTS; i++)
+        if (srv->client_fds[i] != -1)
+            close(srv->client_fds[i]);
+
+    pthread_mutex_destroy(&srv->lock);
+    free(srv);
+}
+
+void server_start(Server* srv) {
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+
+    while (srv->running) {
+        int client_fd = accept(srv->server_fd, (struct sockaddr*)&client_addr, &client_len);
+        if (client_fd < 0) {
+            perror("Accept failed");
+            continue;
+        }
+
+        pthread_mutex_lock(&srv->lock);
+        int idx = -1;
         for (int i = 0; i < MAX_CLIENTS; i++) {
-            PlayerState *p = &gameState.players[i];
-            if (!p->alive) continue;
-
-            if (UpdateGame(p, &gameState)) {
-                ServerMessage msg = {.type = MSG_GAME_OVER};
-                send_all(clientSockets[i], &msg, sizeof(msg));
-                shutdown(clientSockets[i], SHUT_RDWR);
-                close(clientSockets[i]);
-                p->alive = 0;
-                continue;
-            }
-
-            if (p->x == gameState.fruitX && p->y == gameState.fruitY) {
-                p->tail_length++;
-                p->score++;
-                gameState.fruitX = rand() % GRID_WIDTH;
-                gameState.fruitY = rand() % GRID_HEIGHT;
+            if (srv->client_fds[i] == -1) {
+                srv->client_fds[i] = client_fd;
+                idx = i;
+                break;
             }
         }
+        pthread_mutex_unlock(&srv->lock);
 
-        BroadcastState(&gameState, clientSockets);
-        pthread_mutex_unlock(&gameMutex);
+        if (idx == -1) {
+            close(client_fd);
+            printf("Max clients reached, connection refused\n");
+            continue;
+        }
+
+        ClientThreadData* data = malloc(sizeof(ClientThreadData));
+        data->server = srv;
+        data->client_idx = idx;
+        pthread_create(&srv->threads[idx], NULL, client_thread, data);
+        pthread_detach(srv->threads[idx]);
+
+        printf("Client %d connected\n", idx);
     }
+}
 
-    close(server_fd);
-    pthread_join(acceptThread, NULL);
-
+void server_broadcast_state(Server* srv, SerializedGameState* s) {
+    pthread_mutex_lock(&srv->lock);
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (clientSockets[i] >= 0) {
-            shutdown(clientSockets[i], SHUT_RDWR);
-            close(clientSockets[i]);
-            clientSockets[i] = -1;
+        if (srv->client_fds[i] != -1) {
+            write(srv->client_fds[i], s, sizeof(*s));  // send actual struct bytes
         }
-        gameState.players[i].alive = 0;
+    }
+    pthread_mutex_unlock(&srv->lock);
+}
+
+
+
+// Pushes client input to server queue
+void server_push_input(Server* srv, int client_idx, int input) {
+    pthread_mutex_lock(&srv->lock);
+    srv->input_client_idx[srv->input_tail] = client_idx;
+    srv->input_value[srv->input_tail] = input;
+    srv->input_tail = (srv->input_tail + 1) % 1024;
+    pthread_mutex_unlock(&srv->lock);
+}
+
+// Gets next input from queue (for game logic)
+bool server_get_next_input(Server* srv, int* client_idx, int* input) {
+    bool has_input = false;
+    pthread_mutex_lock(&srv->lock);
+    if (srv->input_head != srv->input_tail) {
+        *client_idx = srv->input_client_idx[srv->input_head];
+        *input = srv->input_value[srv->input_head];
+        srv->input_head = (srv->input_head + 1) % 1024;
+        has_input = true;
+    }
+    pthread_mutex_unlock(&srv->lock);
+    return has_input;
+}
+
+int main(void) {
+    Server* srv = server_create(1337);
+    if (!srv) {
+        fprintf(stderr, "Failed to create server\n");
+        return -1;
     }
 
-    printf("Server shutdown complete\n");
+    // Start listening for clients
+    pthread_t server_thread;
+    pthread_create(&server_thread, NULL, server_start_thread, srv);
+
+    // Create the game
+    Game* g = game_create(60, 45);
+
+    Snake* snakes[MAX_CLIENTS] = {0};
+
+    // Game loop
+    while (srv->running) {
+        int client_idx, input;
+        while (server_get_next_input(srv, &client_idx, &input)) {
+            if (client_idx >= 0 && client_idx < MAX_CLIENTS) {
+                // If this client has no snake yet, create it
+                if (!snakes[client_idx]) {
+                    snakes[client_idx] = game_add_snake(g, 2 + client_idx * 3, 2 + client_idx * 2);
+                    printf("Assigned snake to client %d\n", client_idx);
+                }
+                snake_set_direction(snakes[client_idx], input);
+            }
+        }
+
+        game_update(g);
+
+        // Send game state to all clients
+        GameState* state = game_get_state(g);
+        SerializedGameState s;
+        s.num_snakes = gamestate_get_num_snakes(state);
+        for (int i = 0; i < s.num_snakes; i++) {
+            s.snake_lengths[i] = gamestate_get_snake_length(state, i);
+            for (int j = 0; j < s.snake_lengths[i]; j++) {
+                s.snake_x[i][j] = gamestate_get_snake_segment_x(state, i, j);
+                s.snake_y[i][j] = gamestate_get_snake_segment_y(state, i, j);
+            }
+            s.snake_scores[i] = gamestate_get_snake_score(state, i);
+        }
+        s.fruit_x = gamestate_get_fruit_x(state);
+        s.fruit_y = gamestate_get_fruit_y(state);
+        s.game_over = gamestate_is_game_over(state);
+
+        server_broadcast_state(srv, &s);
+        free(state);
+
+        usleep(100000); // ~10 FPS
+    }
+
+    game_destroy(g);
+    server_destroy(srv);
     return 0;
 }

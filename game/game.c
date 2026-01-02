@@ -1,88 +1,215 @@
-#include "../include/game.h"
 
-void SetDirection(PlayerState *player, int newDirection) {
-    // Block opposite direction changes
-    if ((player->direction == LEFT  && newDirection == RIGHT) ||
-        (player->direction == RIGHT && newDirection == LEFT)  ||
-        (player->direction == UP    && newDirection == DOWN)  ||
-        (player->direction == DOWN  && newDirection == UP)) {
-        return; // ignore invalid turn
+#include "game.h"
+#include "../common/game_protocol.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+#include "fruit.h"
+
+struct GameState {
+    int num_snakes;
+    int snake_lengths[MAX_SNAKES];
+    int snake_segments_x[MAX_SNAKES][MAX_SNAKE_LENGTH];
+    int snake_segments_y[MAX_SNAKES][MAX_SNAKE_LENGTH];
+    int snake_scores[MAX_SNAKES];
+    int fruit_x;
+    int fruit_y;
+    int game_over;
+};
+
+struct Game {
+    int width, height;
+    Snake* snakes[MAX_SNAKES];
+    int num_snakes;
+    Fruit *fruit;
+    int is_game_over;
+};
+
+Game* game_create(int width, int height) {
+    Game *g = malloc(sizeof(Game));
+    g->width = width;
+    g->height = height;
+    g->num_snakes = 0;
+
+    g->fruit = create_fruit(width, height);
+    g->is_game_over = 0;
+
+    memset(g->snakes, 0, sizeof(g->snakes));
+    return g;
+}
+
+void game_destroy(Game* g) {
+    if (!g) return;
+    for (int i = 0; i < g->num_snakes; i++) {
+        snake_destroy(g->snakes[i]);
+    }
+    destroy_fruit(g->fruit);
+    free(g);
+}
+
+Snake* game_add_snake(Game* g, int start_x, int start_y) {
+    if (g->num_snakes >= MAX_SNAKES) return NULL;
+    Snake *s = snake_create(start_x, start_y);
+    g->snakes[g->num_snakes++] = s;
+    return s;
+}
+
+void game_update(Game* g) {
+    if (!g || g->is_game_over) return;
+
+    for (int i = 0; i < g->num_snakes; i++) {
+        Snake* s = g->snakes[i];
+
+        snake_move(s, g->width, g->height);
+
+        if (snake_check_self_collision(s)) {
+            g->is_game_over = 1;
+            return;
         }
 
-    player->direction = newDirection;
-}
-
-int CheckSelfCollision(PlayerState *player) {
-    for(int i = 0; i < player->tail_length; i++) {
-        if(player->x == player->tailX[i] &&
-           player->y == player->tailY[i]) {
-            return 1;
-           }
-    }
-    return 0;
-}
-
-int CheckCollisionWithOtherPlayers(PlayerState *p, GameState *state) {
-    for(int i = 0; i < MAX_CLIENTS; i++){
-        if(&state->players[i] == p) continue;   // skip self
-        if(!state->players[i].alive) continue;
-
-        for(int t = 0; t < state->players[i].tail_length; t++){
-            if(p->x == state->players[i].tailX[t] && p->y == state->players[i].tailY[t]){
-                return 1; // collision detected
+        if (snake_get_x(s) == fruit_get_x(g->fruit) &&
+            snake_get_y(s) == fruit_get_y(g->fruit)) {
+            snake_grow(s);
+            fruit_new_coordinates(g->fruit, g->width, g->height);
             }
-        }
+    }
+}
 
-        // optional: check if head collides with other player's head
-        if(p->x == state->players[i].x && p->y == state->players[i].y){
-            return 1;
+int game_get_width(Game *g) {
+    if (!g) return 0;
+    return g->width;
+}
+
+int game_get_heigth(Game *g) {
+    if (!g) return 0;
+    return g->height;
+}
+
+int game_is_over(const Game* g) {
+    if (!g) return 1;
+    return g->is_game_over;
+}
+
+GameState* game_get_state(Game* g) {
+    if (!g) return NULL;
+
+    GameState* state = malloc(sizeof(GameState));
+    memset(state, 0, sizeof(GameState));
+
+    state->num_snakes = g->num_snakes;
+    state->game_over = g->is_game_over;
+
+    for (int i = 0; i < g->num_snakes; i++) {
+        Snake* s = g->snakes[i];
+        int len = snake_get_length(s);
+        state->snake_lengths[i] = len;
+        state->snake_scores[i] = snake_get_score(s);
+
+        for (int j = 0; j < len; j++) {
+            state->snake_segments_x[i][j] = snake_get_segment_x(s, j);
+            state->snake_segments_y[i][j] = snake_get_segment_y(s, j);
         }
     }
-    return 0;
+
+    state->fruit_x = fruit_get_x(g->fruit);
+    state->fruit_y = fruit_get_y(g->fruit);
+
+    return state;
+}
+
+void game_free_state(GameState* s) {
+    free(s);
+}
+
+int gamestate_get_num_snakes(GameState* s) {
+    return s ? s->num_snakes : 0;
+}
+
+int gamestate_get_snake_length(GameState* s, int snake) {
+    return (s && snake >= 0 && snake < s->num_snakes) ? s->snake_lengths[snake] : 0;
+}
+
+int gamestate_get_snake_score(GameState* s, int snake) {
+    return (s && snake >= 0 && snake < s->num_snakes) ? s->snake_scores[snake] : 0;
+}
+
+int gamestate_get_snake_segment_x(GameState* s, int snake, int segment) {
+    if (!s || snake < 0 || snake >= s->num_snakes) return 0;
+    if (segment < 0 || segment >= s->snake_lengths[snake]) return 0;
+    return s->snake_segments_x[snake][segment];
+}
+
+int gamestate_get_snake_segment_y(GameState* s, int snake, int segment) {
+    if (!s || snake < 0 || snake >= s->num_snakes) return 0;
+    if (segment < 0 || segment >= s->snake_lengths[snake]) return 0;
+    return s->snake_segments_y[snake][segment];
+}
+
+int gamestate_get_fruit_x(GameState* s) {
+    return s ? s->fruit_x : 0;
+}
+
+int gamestate_get_fruit_y(GameState* s) {
+    return s ? s->fruit_y : 0;
+}
+
+int gamestate_is_game_over(GameState *s) {
+    if (!s) return 0;
+    return s->game_over;
+}
+
+void gamestate_set_game_over(GameState *s, int game_over) {
+    if (!s) return;
+    s->game_over = game_over;
+}
+
+void gamestate_set_fruit(GameState *s, int fruit_x, int fruit_y) {
+    if (!s) return;
+    s->fruit_x = fruit_x;
+    s->fruit_y = fruit_y;
+}
+
+void gamestate_set_snake_score(GameState* state, int snake_idx, int score) {
+    if (!state) return;
+    if (snake_idx < 0 || snake_idx >= state->num_snakes) return;
+
+    state->snake_scores[snake_idx] = score;
+}
+
+void gamestate_set_snake_segment(GameState* state, int snake_idx, int segment_idx, int x, int y) {
+    if (!state) return;
+    if (snake_idx < 0 || snake_idx >= state->num_snakes) return;
+    if (segment_idx < 0 || segment_idx >= state->snake_lengths[snake_idx]) return;
+
+    state->snake_segments_x[snake_idx][segment_idx] = x;
+    state->snake_segments_y[snake_idx][segment_idx] = y;
 }
 
 
-void ResetGame(PlayerState *player) {
-    player->x = GRID_WIDTH/2;
-    player->y = GRID_HEIGHT/2;
-    player->tail_length = 5;
-    player->direction = 2;
+void gamestate_serialize(const GameState* state, SerializedGameState* out) {
+    out->num_snakes = gamestate_get_num_snakes(state);
+    for (int i = 0; i < out->num_snakes; i++) {
+        out->snake_lengths[i] = gamestate_get_snake_length(state, i);
+        for (int j = 0; j < out->snake_lengths[i]; j++) {
+            out->snake_x[i][j] = gamestate_get_snake_segment_x(state, i, j);
+            out->snake_y[i][j] = gamestate_get_snake_segment_y(state, i, j);
+        }
+        out->snake_scores[i] = gamestate_get_snake_score(state, i);
+    }
+    out->fruit_x = gamestate_get_fruit_x(state);
+    out->fruit_y = gamestate_get_fruit_y(state);
+    out->game_over = gamestate_is_game_over(state);
 }
 
-int UpdateGame(PlayerState *player, GameState *state) {
-    int prevX = player->x, prevY = player->y;
-    for(int i=player->tail_length-1; i>0; i--){
-        player->tailX[i] = player->tailX[i-1];
-        player->tailY[i] = player->tailY[i-1];
+void gamestate_deserialize(GameState* state, const SerializedGameState* in) {
+    // update state via setters, not direct struct access
+    for (int i = 0; i < in->num_snakes; i++) {
+        for (int j = 0; j < in->snake_lengths[i]; j++) {
+            gamestate_set_snake_segment(state, i, j, in->snake_x[i][j], in->snake_y[i][j]);
+        }
+        gamestate_set_snake_score(state, i, in->snake_scores[i]);
     }
-    if(player->tail_length>0){
-        player->tailX[0] = prevX;
-        player->tailY[0] = prevY;
-    }
-
-    switch (player->direction) {
-        case LEFT:  player->x--; break;
-        case RIGHT: player->x++; break;
-        case UP:    player->y--; break;
-        case DOWN:  player->y++; break;
-    }
-
-    /* Wrap around */
-    if (player->x < 0) player->x = GRID_WIDTH - 1;
-    if (player->x >= GRID_WIDTH) player->x = 0;
-    if (player->y < 0) player->y = GRID_HEIGHT - 1;
-    if (player->y >= GRID_HEIGHT) player->y = 0;
-
-
-    if(CheckSelfCollision(player)) {
-        ResetGame(player);
-        return 1;
-    }
-
-    if(CheckCollisionWithOtherPlayers(player, state)) {
-        ResetGame(player); // or mark as dead: player->alive = 0
-        return 1;
-    }
-
-    return 0;
+    gamestate_set_fruit(state, in->fruit_x, in->fruit_y);
+    gamestate_set_game_over(state, in->game_over);
 }
