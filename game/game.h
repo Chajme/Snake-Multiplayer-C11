@@ -3,6 +3,7 @@
 #define SNAKEGAMEREFACTORED_GAME_H
 
 #include "snake.h"
+#include "../common/game_protocol.h"
 
 #define MAX_SNAKES 5
 
@@ -18,6 +19,8 @@ void game_update(Game* g); // pohyb hadov, kolízie, jedlo
 int game_get_width(Game *g);
 int game_get_heigth(Game *g);
 int game_is_over(const Game* g);
+void game_set_snake_dead(Game* g, int snake_idx);
+void game_set_snake_alive(Game* g, int snake_idx);
 
 GameState* game_get_state(Game* g);
 void game_free_state(GameState* s);
@@ -38,5 +41,7 @@ void gamestate_set_fruit(GameState *s, int fruit_x, int fruit_y);
 void gamestate_set_snake_score(GameState* state, int snake_idx, int score);
 void gamestate_set_snake_segment(GameState* state, int snake_idx, int segment_idx, int x, int y);
 
+void gamestate_serialize(GameState* state, SerializedGameState* out);
+void gamestate_deserialize(GameState* state, const SerializedGameState* in);
 
 #endif //SNAKEGAMEREFACTORED_GAME_H

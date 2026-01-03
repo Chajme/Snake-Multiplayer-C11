@@ -11,6 +11,7 @@ struct GameRenderer {
     int window_width;
     int window_height;
     int cell_size;
+    bool overlay_active;
 };
 
 int renderer_init(GameRenderer** gr, const char* title, int width, int height, int cell_size) {
@@ -38,6 +39,7 @@ int renderer_init(GameRenderer** gr, const char* title, int width, int height, i
     r->cell_size = cell_size;
     r->window_width = width;
     r->window_height = height;
+    r->overlay_active = false;
 
     // Load font
     r->font = TTF_OpenFont("../font/PlayfulTime-BLBB8.ttf", 32);
@@ -62,6 +64,25 @@ void renderer_destroy(GameRenderer* gr) {
     TTF_Quit();
     SDL_Quit();
     free(gr);
+}
+
+SDL_Color renderer_generate_snake_color(int player_id) {
+    // A fixed palette of distinguishable colors
+    SDL_Color palette[] = {
+        {0, 255, 0, 255},    // green
+        {0, 0, 255, 255},    // blue
+        {255, 255, 0, 255},  // yellow
+        {255, 0, 255, 255},  // magenta
+        {0, 255, 255, 255},  // cyan
+        {255, 165, 0, 255},  // orange
+        {128, 0, 128, 255},  // purple
+        {255, 192, 203, 255} // pink
+    };
+
+    int palette_size = sizeof(palette) / sizeof(palette[0]);
+
+    // Wrap around if player_id >= palette_size
+    return palette[player_id % palette_size];
 }
 
 void renderer_draw_text(GameRenderer* gr, const char* text, int x, int y, SDL_Color color) {
@@ -166,6 +187,7 @@ void renderer_draw_game(GameRenderer* gr, GameState* state) {
 void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, int snake_id) {
     if (!gr || !s) return;
 
+
     SDL_SetRenderDrawColor(gr->renderer, 0, 0, 0, 255);
     SDL_RenderClear(gr->renderer);
 
@@ -176,6 +198,9 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, in
     SDL_SetRenderDrawColor(gr->renderer, 0, 255, 0, 255);
     for (int i = 0; i < s->num_snakes; i++) {
         if (!s->snake_alive[i]) continue;
+
+        SDL_Color color = renderer_generate_snake_color(i);
+        SDL_SetRenderDrawColor(gr->renderer, color.r, color.g, color.b, color.a);
 
         for (int j = 0; j < s->snake_lengths[i]; j++) {
             SDL_Rect r;
@@ -197,11 +222,24 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, in
     SDL_RenderFillRect(gr->renderer, &fr);
 
     // Draw game over overlay
-    if (!s->snake_alive[snake_id]) {
-        renderer_draw_game_over_overlay(
-            gr,
-            s->snake_scores[snake_id]
-        );
+    // if (!s->snake_alive[snake_id]) {
+    //     renderer_draw_game_over_overlay(
+    //         gr,
+    //         s->snake_scores[snake_id]
+    //     );
+    // }
+
+    if (!s->snake_alive[snake_id] && !gr->overlay_active) {
+        gr->overlay_active = true; // activate overlay once
+        printf("Snake %d DEAD, activating overlay\n", snake_id);
+    } else if (s->snake_alive[snake_id]) {
+        printf("Snake %d ALIVE, deactivating overlay\n", snake_id);
+        gr->overlay_active = false; // new snake spawned, hide overlay
+    }
+
+    // in render
+    if (gr->overlay_active) {
+        renderer_draw_game_over_overlay(gr, s->snake_scores[snake_id]);
     }
 
     SDL_RenderPresent(gr->renderer);

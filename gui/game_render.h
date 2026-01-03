@@ -11,6 +11,8 @@ typedef struct GameRenderer GameRenderer;  // forward declaration
 int renderer_init(GameRenderer** gr, const char* title, int width, int height, int cell_size);
 void renderer_destroy(GameRenderer* gr);
 
+SDL_Color renderer_generate_snake_color(int player_id);
+
 void rendered_draw_grid(GameRenderer *gr, int width, int height);
 void renderer_draw_game(GameRenderer* gr, GameState* state);
 void renderer_draw_game_over_overlay(GameRenderer *gr, int score);

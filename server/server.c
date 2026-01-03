@@ -25,6 +25,7 @@ struct Server {
 
 typedef struct {
     Server* server;
+    ClientDisconnectCallback on_disconnect;
     int client_idx;
 } ClientThreadData;
 
@@ -217,12 +218,14 @@ int main(void) {
     // Game loop
     while (srv->running) {
         int client_idx, input;
+
         while (server_get_next_input(srv, &client_idx, &input)) {
             if (client_idx >= 0 && client_idx < MAX_CLIENTS) {
                 // If this client has no snake yet, create it
                 if (!snakes[client_idx]) {
                     snakes[client_idx] = game_add_snake(g, 2 + client_idx * 3, 2 + client_idx * 2);
                     printf("Assigned snake to client %d\n", client_idx);
+                    game_set_snake_alive(g, client_idx);
                 }
                 snake_set_direction(snakes[client_idx], input);
             }
@@ -230,24 +233,33 @@ int main(void) {
 
         game_update(g);
 
-        // Send game state to all clients
         GameState* state = game_get_state(g);
-        SerializedGameState s;
-        s.num_snakes = gamestate_get_num_snakes(state);
-        for (int i = 0; i < s.num_snakes; i++) {
-            s.snake_lengths[i] = gamestate_get_snake_length(state, i);
-            s.snake_alive[i] = gamestate_is_snake_alive(state, i);
-            for (int j = 0; j < s.snake_lengths[i]; j++) {
-                s.snake_x[i][j] = gamestate_get_snake_segment_x(state, i, j);
-                s.snake_y[i][j] = gamestate_get_snake_segment_y(state, i, j);
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (snakes[i] && srv->client_fds[i] == -1 && gamestate_is_snake_alive(state, i)) {
+                game_set_snake_dead(g, i);
+                snakes[i] = NULL;
+                printf("Snake for client %d destroyed due to disconnect\n", i);
             }
-            s.snake_scores[i] = gamestate_get_snake_score(state, i);
         }
-        s.fruit_x = gamestate_get_fruit_x(state);
-        s.fruit_y = gamestate_get_fruit_y(state);
 
+        // Send game state to all clients
+        state = game_get_state(g);
+        SerializedGameState s;
+        // s.num_snakes = gamestate_get_num_snakes(state);
+        // for (int i = 0; i < s.num_snakes; i++) {
+        //     s.snake_lengths[i] = gamestate_get_snake_length(state, i);
+        //     s.snake_alive[i] = gamestate_is_snake_alive(state, i);
+        //     for (int j = 0; j < s.snake_lengths[i]; j++) {
+        //         s.snake_x[i][j] = gamestate_get_snake_segment_x(state, i, j);
+        //         s.snake_y[i][j] = gamestate_get_snake_segment_y(state, i, j);
+        //     }
+        //     s.snake_scores[i] = gamestate_get_snake_score(state, i);
+        // }
+        // s.fruit_x = gamestate_get_fruit_x(state);
+        // s.fruit_y = gamestate_get_fruit_y(state);
+        gamestate_serialize(state, &s);
         server_broadcast_state(srv, &s);
-        free(state);
+        game_free_state(state);
 
         usleep(100000); // ~10 FPS
     }

@@ -8,6 +8,7 @@
 #define MAX_CLIENTS 5
 #define BUFFER_SIZE 256
 
+typedef void (*ClientDisconnectCallback)(int client_idx, void* user_data);
 typedef struct Server Server;
 
 // Creates and initializes the server

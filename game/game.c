@@ -73,7 +73,7 @@ void game_update(Game* g) {
         snake_move(s, g->width, g->height);
 
         if (snake_check_self_collision(s)) {
-            g->snake_alive[i] = 0;
+            game_set_snake_dead(g, i);
             continue;
         }
 
@@ -83,6 +83,24 @@ void game_update(Game* g) {
             fruit_new_coordinates(g->fruit, g->width, g->height);
             }
     }
+}
+
+void game_set_snake_dead(Game* g, int snake_idx) {
+    if (!g) return;
+    if (snake_idx < 0 || snake_idx >= g->num_snakes) return;
+    if (!g->snakes[snake_idx]) return; // already dead
+
+    snake_destroy(g->snakes[snake_idx]); // free memory
+    g->snakes[snake_idx] = NULL;
+    g->snake_alive[snake_idx] = 0;
+}
+
+void game_set_snake_alive(Game* g, int snake_idx) {
+    if (!g) return;
+    if (snake_idx < 0 || snake_idx >= g->num_snakes) return;
+    if (g->snakes[snake_idx]) return;
+
+    g->snake_alive[snake_idx] = 1;
 }
 
 int game_get_width(Game *g) {
@@ -127,6 +145,7 @@ GameState* game_get_state(Game* g) {
 }
 
 void game_free_state(GameState* s) {
+    if (!s) return;
     free(s);
 }
 
