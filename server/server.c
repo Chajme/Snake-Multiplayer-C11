@@ -150,6 +150,9 @@ void server_start(Server* srv) {
             continue;
         }
 
+        AssignPlayerMsg msg = { .player_id = idx };
+        write(client_fd, &msg, sizeof(msg));
+
         ClientThreadData* data = malloc(sizeof(ClientThreadData));
         data->server = srv;
         data->client_idx = idx;
@@ -233,6 +236,7 @@ int main(void) {
         s.num_snakes = gamestate_get_num_snakes(state);
         for (int i = 0; i < s.num_snakes; i++) {
             s.snake_lengths[i] = gamestate_get_snake_length(state, i);
+            s.snake_alive[i] = gamestate_is_snake_alive(state, i);
             for (int j = 0; j < s.snake_lengths[i]; j++) {
                 s.snake_x[i][j] = gamestate_get_snake_segment_x(state, i, j);
                 s.snake_y[i][j] = gamestate_get_snake_segment_y(state, i, j);
@@ -241,7 +245,6 @@ int main(void) {
         }
         s.fruit_x = gamestate_get_fruit_x(state);
         s.fruit_y = gamestate_get_fruit_y(state);
-        s.game_over = gamestate_is_game_over(state);
 
         server_broadcast_state(srv, &s);
         free(state);

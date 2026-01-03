@@ -55,6 +55,8 @@ int renderer_init(GameRenderer** gr, const char* title, int width, int height, i
 
 void renderer_destroy(GameRenderer* gr) {
     if (!gr) return;
+
+    TTF_CloseFont(gr->font);
     SDL_DestroyRenderer(gr->renderer);
     SDL_DestroyWindow(gr->window);
     TTF_Quit();
@@ -161,7 +163,7 @@ void renderer_draw_game(GameRenderer* gr, GameState* state) {
     SDL_RenderPresent(gr->renderer);
 }
 
-void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s) {
+void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, int snake_id) {
     if (!gr || !s) return;
 
     SDL_SetRenderDrawColor(gr->renderer, 0, 0, 0, 255);
@@ -173,6 +175,8 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s) {
     // Draw snakes
     SDL_SetRenderDrawColor(gr->renderer, 0, 255, 0, 255);
     for (int i = 0; i < s->num_snakes; i++) {
+        if (!s->snake_alive[i]) continue;
+
         for (int j = 0; j < s->snake_lengths[i]; j++) {
             SDL_Rect r;
             r.x = s->snake_x[i][j] * gr->cell_size;
@@ -193,9 +197,11 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s) {
     SDL_RenderFillRect(gr->renderer, &fr);
 
     // Draw game over overlay
-    if (s->game_over) {
-        int player_score = s->snake_scores[0];
-        renderer_draw_game_over_overlay(gr, player_score);
+    if (!s->snake_alive[snake_id]) {
+        renderer_draw_game_over_overlay(
+            gr,
+            s->snake_scores[snake_id]
+        );
     }
 
     SDL_RenderPresent(gr->renderer);

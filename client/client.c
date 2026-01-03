@@ -20,6 +20,7 @@
 
 struct Client {
     int sock;
+    int player_id;
     bool connected;
 };
 
@@ -42,6 +43,7 @@ Client* client_create(const char* ip, int port) {
         return NULL;
     }
 
+    c->player_id = -1;
     c->connected = true;
     return c;
 }
@@ -82,6 +84,16 @@ int main(void) {
         return -1;
     }
 
+    AssignPlayerMsg id_msg;
+    if (!client_receive_state(c, &id_msg, sizeof(id_msg))) {
+        fprintf(stderr, "Failed to receive player ID\n");
+        client_destroy(c);
+        return -1;
+    }
+
+    c->player_id = id_msg.player_id;
+    printf("Assigned player ID: %d\n", c->player_id);
+
     GameRenderer* gr = NULL;
     if (renderer_init(&gr, "Snake Multiplayer", WIDTH, HEIGHT, CELL_SIZE) != 0) {
         fprintf(stderr, "Renderer init failed\n");
@@ -112,7 +124,7 @@ int main(void) {
 
         // Receive serialized state
         if (client_receive_state(c, &s, sizeof(s))) {
-            renderer_draw_serialized(gr, &s);
+            renderer_draw_serialized(gr, &s, c->player_id);
         }
 
         SDL_Delay(16); // ~60 FPS

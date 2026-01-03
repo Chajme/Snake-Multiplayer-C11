@@ -13,9 +13,14 @@ typedef struct {
     int snake_x[MAX_SNAKES][MAX_LENGTH];
     int snake_y[MAX_SNAKES][MAX_LENGTH];
     int snake_scores[MAX_SNAKES];
+    bool snake_alive[MAX_SNAKES];
     int fruit_x;
     int fruit_y;
-    bool game_over;
+    // bool game_over;
 } SerializedGameState;
+
+typedef struct {
+    int player_id;
+} AssignPlayerMsg;
 
 #endif //GAME_GAME_PROTOCOL_H

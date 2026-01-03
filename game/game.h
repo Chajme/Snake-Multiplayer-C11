@@ -32,6 +32,7 @@ int gamestate_get_fruit_x(GameState* s);
 int gamestate_get_fruit_y(GameState* s);
 
 int gamestate_is_game_over(GameState *s);
+int gamestate_is_snake_alive(GameState *state, int snake);
 void gamestate_set_game_over(GameState *s, int game_over);
 void gamestate_set_fruit(GameState *s, int fruit_x, int fruit_y);
 void gamestate_set_snake_score(GameState* state, int snake_idx, int score);
