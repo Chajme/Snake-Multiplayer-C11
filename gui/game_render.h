@@ -15,8 +15,8 @@ SDL_Color renderer_generate_snake_color(int player_id);
 
 void rendered_draw_grid(GameRenderer *gr, int width, int height);
 void renderer_draw_game(GameRenderer* gr, GameState* state);
-void renderer_draw_game_over_overlay(GameRenderer *gr, int score);
-void renderer_draw_text(GameRenderer* gr, const char* text, int x, int y, SDL_Color color);
+void renderer_draw_game_over_overlay(const GameRenderer *gr, int score);
+void renderer_draw_text(const GameRenderer* gr, const char* text, int x, int y, SDL_Color color);
 void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, int snake_id);
 
 #endif //SNAKEGAMEREFACTORED_GAME_RENDER_H

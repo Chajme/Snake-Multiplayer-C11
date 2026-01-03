@@ -85,13 +85,40 @@ void game_update(Game* g) {
     }
 }
 
+Snake* game_reset_snake(Game *g, int idx) {
+    if (idx < 0 || idx >= MAX_SNAKES) return NULL;
+
+    if (g->snakes[idx]) {
+        snake_destroy(g->snakes[idx]);
+    }
+
+    // Create fresh snake
+    g->snakes[idx] = snake_create(2 + idx * 3, 2 + idx * 2);
+    g->snake_alive[idx] = 1;
+
+    if (idx >= g->num_snakes) {
+        g->num_snakes = idx + 1;
+    }
+
+    return g->snakes[idx];
+}
+
+void game_snake_set_direction(Game *g, int snake_idx, int direction) {
+    if (snake_idx < 0 || snake_idx >= MAX_SNAKES) return;
+    if (!g) return;
+
+    if (g->snake_alive[snake_idx] == 1) {
+        snake_set_direction(g->snakes[snake_idx], direction);
+    }
+}
+
 void game_set_snake_dead(Game* g, int snake_idx) {
     if (!g) return;
     if (snake_idx < 0 || snake_idx >= g->num_snakes) return;
     if (!g->snakes[snake_idx]) return; // already dead
 
-    snake_destroy(g->snakes[snake_idx]); // free memory
-    g->snakes[snake_idx] = NULL;
+    // snake_destroy(g->snakes[snake_idx]); // free memory
+    // g->snakes[snake_idx] = NULL;
     g->snake_alive[snake_idx] = 0;
 }
 

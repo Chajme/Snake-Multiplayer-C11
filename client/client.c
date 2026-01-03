@@ -10,9 +10,7 @@
 #include <SDL_timer.h>
 #include <SDL2/SDL.h>
 #include "../gui/game_render.h"
-#include "../common/game_protocol.h" // MUST come before usage of SerializedGameState
-#include "../game/game.h"            // MUST come before usage of GameState
-
+#include "../common/game_protocol.h"
 
 #define WIDTH 60
 #define HEIGHT 45
@@ -129,7 +127,6 @@ int main(void) {
 
         SDL_Delay(16); // ~60 FPS
     }
-
 
     renderer_destroy(gr);
     client_destroy(c);

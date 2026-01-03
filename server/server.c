@@ -223,19 +223,22 @@ int main(void) {
             if (client_idx >= 0 && client_idx < MAX_CLIENTS) {
                 // If this client has no snake yet, create it
                 if (!snakes[client_idx]) {
-                    snakes[client_idx] = game_add_snake(g, 2 + client_idx * 3, 2 + client_idx * 2);
+                    snakes[client_idx] = game_reset_snake(g, client_idx);
+                    // snakes[client_idx] = game_add_snake(g, 2 + client_idx * 3, 2 + client_idx * 2);
                     printf("Assigned snake to client %d\n", client_idx);
-                    game_set_snake_alive(g, client_idx);
+                    // game_set_snake_alive(g, client_idx);
                 }
-                snake_set_direction(snakes[client_idx], input);
+
+                if (snakes[client_idx]) {
+                    game_snake_set_direction(g,client_idx, input);
+                }
             }
         }
 
         game_update(g);
 
-        GameState* state = game_get_state(g);
         for (int i = 0; i < MAX_CLIENTS; i++) {
-            if (snakes[i] && srv->client_fds[i] == -1 && gamestate_is_snake_alive(state, i)) {
+            if (snakes[i] && srv->client_fds[i] == -1) {   //  && gamestate_is_snake_alive(state, i
                 game_set_snake_dead(g, i);
                 snakes[i] = NULL;
                 printf("Snake for client %d destroyed due to disconnect\n", i);
@@ -243,7 +246,7 @@ int main(void) {
         }
 
         // Send game state to all clients
-        state = game_get_state(g);
+        GameState* state = game_get_state(g);
         SerializedGameState s;
         // s.num_snakes = gamestate_get_num_snakes(state);
         // for (int i = 0; i < s.num_snakes; i++) {

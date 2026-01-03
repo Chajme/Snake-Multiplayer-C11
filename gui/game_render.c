@@ -85,7 +85,7 @@ SDL_Color renderer_generate_snake_color(int player_id) {
     return palette[player_id % palette_size];
 }
 
-void renderer_draw_text(GameRenderer* gr, const char* text, int x, int y, SDL_Color color) {
+void renderer_draw_text(const GameRenderer* gr, const char* text, int x, int y, SDL_Color color) {
     SDL_Surface* surf = TTF_RenderText_Blended(gr->font, text, color);
     if (!surf) return;
 
@@ -102,7 +102,7 @@ void renderer_draw_text(GameRenderer* gr, const char* text, int x, int y, SDL_Co
 }
 
 
-void renderer_draw_game_over_overlay(GameRenderer *gr, int score) {
+void renderer_draw_game_over_overlay(const GameRenderer *gr, int score) {
     SDL_SetRenderDrawBlendMode(gr->renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(gr->renderer, 0, 0, 0, 180);
 
@@ -133,7 +133,7 @@ void renderer_draw_game_over_overlay(GameRenderer *gr, int score) {
     renderer_draw_text(gr, score_text, overlay.w / 2 - 50, overlay.h / 2 + 20, white);
 }
 
-void renderer_draw_grid(GameRenderer* gr, int width, int height) {
+void renderer_draw_grid(const GameRenderer* gr, int width, int height) {
     SDL_SetRenderDrawColor(gr->renderer, 50, 50, 50, 255); // dark gray
     for (int x = 0; x <= width; x++) {
         SDL_RenderDrawLine(gr->renderer, x * gr->cell_size, 0, x * gr->cell_size, height * gr->cell_size);
@@ -231,9 +231,7 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, in
 
     if (!s->snake_alive[snake_id] && !gr->overlay_active) {
         gr->overlay_active = true; // activate overlay once
-        printf("Snake %d DEAD, activating overlay\n", snake_id);
     } else if (s->snake_alive[snake_id]) {
-        printf("Snake %d ALIVE, deactivating overlay\n", snake_id);
         gr->overlay_active = false; // new snake spawned, hide overlay
     }
 

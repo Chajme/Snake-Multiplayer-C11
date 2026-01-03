@@ -16,6 +16,9 @@ void game_destroy(Game* g);
 Snake* game_add_snake(Game* g, int start_x, int start_y);
 void game_update(Game* g); // pohyb hadov, kolízie, jedlo
 
+Snake* game_reset_snake(Game *g, int idx);
+void game_snake_set_direction(Game *g, int snake_idx, int direction);
+
 int game_get_width(Game *g);
 int game_get_heigth(Game *g);
 int game_is_over(const Game* g);
