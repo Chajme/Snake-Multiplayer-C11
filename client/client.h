@@ -13,7 +13,7 @@ void client_destroy(Client* c);
 void client_send_input(Client* c, int input);
 
 // Receive game state from server (blocking)
-bool client_receive_state(Client* c, void* buffer, size_t size);
+bool client_receive_state(const Client* c, void* buffer, size_t size);
 
 // Check if client is connected
 bool client_is_connected(Client* c);

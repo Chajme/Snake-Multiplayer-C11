@@ -95,10 +95,10 @@ void snake_set_direction(Snake* s, int direction) {
 int snake_check_self_collision(const Snake* s) {
     if (!s || vector_get_size(s->segments) < 4) return 0;
 
-    Segment *head = vector_get((Vector*)&s->segments, 0);
+    Segment *head = vector_get(s->segments, 0);
 
     for (size_t i = 1; i < vector_get_size(s->segments); i++) {
-        Segment *seg = vector_get((Vector*)&s->segments, i);
+        Segment *seg = vector_get(s->segments, i);
         if (seg->x == head->x && seg->y == head->y)
             return 1;
     }

@@ -1,6 +1,7 @@
 #include "server.h"
 #include "../game/game.h"             // defines Game and GameState, game logic
-#include "../common/game_protocol.h"  // defines SerializedGameState
+#include "../common/game_protocol.h"// defines SerializedGameState
+#include "../util/queue.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,11 +19,7 @@ struct Server {
     pthread_mutex_t lock;
     bool running;
 
-    // Simple input queue
-    int input_client_idx[1024];
-    int input_value[1024];
-    int input_head;
-    int input_tail;
+    Queue *input_queue;
 };
 
 typedef struct {
@@ -30,6 +27,11 @@ typedef struct {
     ClientDisconnectCallback on_disconnect;
     int client_idx;
 } ClientThreadData;
+
+typedef struct {
+    int client_id;
+    int direction;
+} PlayerInput;
 
 static volatile sig_atomic_t shutdown_requested = 0;
 
@@ -111,11 +113,24 @@ Server* server_create(int port) {
     }
 
     printf("Server listening on port %d\n", port);
+
+    srv->input_queue = queue_new(sizeof(PlayerInput), 1024);
+    if (!srv->input_queue) {
+        perror("Failed to create input queue");
+        close(srv->server_fd);
+        pthread_mutex_destroy(&srv->lock);
+        free(srv);
+        return NULL;
+    }
+
     return srv;
 }
 
 void server_destroy(Server* srv) {
     if (!srv) return;
+
+    queue_free(srv->input_queue);
+
     pthread_mutex_destroy(&srv->lock);
     free(srv);
 }
@@ -163,7 +178,6 @@ void server_start(Server* srv) {
 
 void server_start_async(Server* srv) {
     pthread_create(&srv->accept_thread, NULL, server_start_thread, srv);
-    // pthread_detach(srv->accept_thread);
 }
 
 void server_stop(Server *srv) {
@@ -176,9 +190,6 @@ void server_stop(Server *srv) {
     // This unblocks accept()
     shutdown(srv->server_fd, SHUT_RDWR);
     close(srv->server_fd);
-
-    // Wait for accept loop to exit
-    // pthread_join(srv->accept_thread, NULL);
 
     // Close all client sockets (client threads will exit)
     pthread_mutex_lock(&srv->lock);
@@ -216,25 +227,33 @@ void server_broadcast_state(Server* srv, SerializedGameState* s) {
 
 // Pushes client input to server queue
 void server_push_input(Server* srv, int client_idx, int input) {
+    if (!srv) return;
+
+    PlayerInput ev = {
+        .client_id = client_idx,
+        .direction = input
+    };
+
     pthread_mutex_lock(&srv->lock);
-    srv->input_client_idx[srv->input_tail] = client_idx;
-    srv->input_value[srv->input_tail] = input;
-    srv->input_tail = (srv->input_tail + 1) % 1024;
+    queue_push(srv->input_queue, &ev);
     pthread_mutex_unlock(&srv->lock);
 }
 
 // Gets next input from queue (for game logic)
 bool server_get_next_input(Server* srv, int* client_idx, int* input) {
-    bool has_input = false;
+    if (!srv || !client_idx || !input) return false;
+
+    PlayerInput ev;
+
     pthread_mutex_lock(&srv->lock);
-    if (srv->input_head != srv->input_tail) {
-        *client_idx = srv->input_client_idx[srv->input_head];
-        *input = srv->input_value[srv->input_head];
-        srv->input_head = (srv->input_head + 1) % 1024;
-        has_input = true;
-    }
+    int ok = queue_pop(srv->input_queue, &ev);
     pthread_mutex_unlock(&srv->lock);
-    return has_input;
+
+    if (!ok) return false;
+
+    *client_idx = ev.client_id;
+    *input = ev.direction;
+    return true;
 }
 
 int main(void) {
@@ -247,9 +266,6 @@ int main(void) {
         return -1;
     }
 
-    // Start listening for clients
-    // pthread_t server_thread;
-    // pthread_create(&server_thread, NULL, server_start_thread, srv);
     server_start_async(srv);
 
     // Create the game

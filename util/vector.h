@@ -4,13 +4,14 @@
 #include <stddef.h>
 
 /* Function pointer types */
-typedef void (*vec_copy_fn)(void *dest, const void *src);
-typedef void (*vec_destroy_fn)(void *elem);
+typedef void (*vec_copy)(void *dest, const void *src);
+typedef void (*vec_destroy)(void *elem);
+typedef void (*vec_print)(const void *elem);
 
 typedef struct Vector Vector;
 
 /* OOP-style constructors */
-Vector* vector_new(size_t elem_size, vec_copy_fn copy, vec_destroy_fn destroy);
+Vector* vector_new(size_t elem_size, vec_copy copy, vec_destroy destroy);
 void vector_free(Vector* v);
 
 /* API */
@@ -18,6 +19,8 @@ int  vector_push_back(Vector *v, const void *elem);
 void *vector_get(Vector *v, size_t index);
 size_t vector_get_size(Vector *v);
 void vector_clear(Vector *v);
+
+void vector_print(Vector *v, vec_print print);
 
 
 #endif //GAME_BACKUP_2_VECTOR_H

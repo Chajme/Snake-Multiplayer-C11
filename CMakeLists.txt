@@ -5,6 +5,7 @@ set(CMAKE_C_STANDARD 11)
 
 # Shared sources for the game logic
 set(GAME_SOURCES
+        util/queue.c
         util/vector.c
         game/snake.c
         game/game.c

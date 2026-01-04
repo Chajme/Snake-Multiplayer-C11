@@ -1,4 +1,6 @@
 #include "vector.h"
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,13 +13,13 @@ struct Vector {
     size_t capacity;
     size_t elem_size;
 
-    vec_copy_fn copy;
-    vec_destroy_fn destroy;
+    vec_copy copy;
+    vec_destroy destroy;
 };
 
 /* Internal functions */
 static int vector_init(Vector *v, size_t elem_size,
-                       vec_copy_fn copy, vec_destroy_fn destroy)
+                       vec_copy copy, vec_destroy destroy)
 {
     if (!v || elem_size == 0) return 0;
 
@@ -42,7 +44,7 @@ static int vector_resize(Vector *v, size_t new_capacity)
 }
 
 /* Public OOP-style constructor */
-Vector* vector_new(size_t elem_size, vec_copy_fn copy, vec_destroy_fn destroy)
+Vector* vector_new(size_t elem_size, vec_copy copy, vec_destroy destroy)
 {
     Vector *v = malloc(sizeof(Vector));
     if (!v) return NULL;
@@ -108,4 +110,14 @@ void vector_clear(Vector *v)
         }
     }
     v->size = 0;
+}
+
+void vector_print(Vector *v, vec_print print) {
+    if (!v || !print) return;
+
+    for (size_t i = 0; i < v->size; i++) {
+        void *elem = (char*)v->data + i * v->elem_size;
+        print(elem);
+    }
+    printf("\n");
 }
