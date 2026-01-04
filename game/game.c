@@ -16,6 +16,7 @@ struct GameState {
     bool snake_alive[MAX_SNAKES];
     int fruit_x;
     int fruit_y;
+    int game_over;
 };
 
 struct Game {
@@ -224,6 +225,16 @@ void gamestate_set_snake_segment(GameState* state, int snake_idx, int segment_id
 
     state->snake_segments_x[snake_idx][segment_idx] = x;
     state->snake_segments_y[snake_idx][segment_idx] = y;
+}
+
+int gamestate_is_game_over(GameState *s) {
+    if (!s) return 0;
+    return s->game_over;
+}
+
+void gamestate_set_game_over(GameState *s, int game_over) {
+    if (!s) return;
+    s->game_over = game_over;
 }
 
 int gamestate_is_snake_alive(GameState *state, int snake) {
