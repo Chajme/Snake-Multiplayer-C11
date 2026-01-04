@@ -16,7 +16,6 @@ struct GameState {
     bool snake_alive[MAX_SNAKES];
     int fruit_x;
     int fruit_y;
-    int game_over;
 };
 
 struct Game {
@@ -25,7 +24,6 @@ struct Game {
     int num_snakes;
     int snake_alive[MAX_SNAKES];
     Fruit *fruit;
-    // int is_game_over;
 };
 
 Game* game_create(int width, int height) {
@@ -117,8 +115,6 @@ void game_set_snake_dead(Game* g, int snake_idx) {
     if (snake_idx < 0 || snake_idx >= g->num_snakes) return;
     if (!g->snakes[snake_idx]) return; // already dead
 
-    // snake_destroy(g->snakes[snake_idx]); // free memory
-    // g->snakes[snake_idx] = NULL;
     g->snake_alive[snake_idx] = 0;
 }
 
@@ -208,16 +204,6 @@ int gamestate_get_fruit_y(GameState* s) {
     return s ? s->fruit_y : 0;
 }
 
-int gamestate_is_game_over(GameState *s) {
-    if (!s) return 0;
-    return s->game_over;
-}
-
-void gamestate_set_game_over(GameState *s, int game_over) {
-    if (!s) return;
-    s->game_over = game_over;
-}
-
 void gamestate_set_fruit(GameState *s, int fruit_x, int fruit_y) {
     if (!s) return;
     s->fruit_x = fruit_x;
@@ -248,18 +234,6 @@ int gamestate_is_snake_alive(GameState *state, int snake) {
 
 
 void gamestate_serialize(GameState* state, SerializedGameState* out) {
-    // out->num_snakes = gamestate_get_num_snakes(state);
-    // for (int i = 0; i < out->num_snakes; i++) {
-    //     out->snake_lengths[i] = gamestate_get_snake_length(state, i);
-    //     for (int j = 0; j < out->snake_lengths[i]; j++) {
-    //         out->snake_x[i][j] = gamestate_get_snake_segment_x(state, i, j);
-    //         out->snake_y[i][j] = gamestate_get_snake_segment_y(state, i, j);
-    //     }
-    //     out->snake_scores[i] = gamestate_get_snake_score(state, i);
-    // }
-    // out->fruit_x = gamestate_get_fruit_x(state);
-    // out->fruit_y = gamestate_get_fruit_y(state);
-    // out->game_over = gamestate_is_game_over(state);
     out->num_snakes = state->num_snakes;
 
     for (int i = 0; i < out->num_snakes; i++) {
