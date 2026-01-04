@@ -116,20 +116,6 @@ Server* server_create(int port) {
 
 void server_destroy(Server* srv) {
     if (!srv) return;
-
-    // srv->running = false;
-    // close(srv->server_fd);
-
-    // Join all threads before cleaning up
-    // for (int i = 0; i < MAX_CLIENTS; i++) {
-    //     if (srv->client_fds[i] != -1) {
-    //         close(srv->client_fds[i]);
-    //         if (pthread_join(srv->threads[i], NULL) != 0) {
-    //             perror("Failed to join client thread");
-    //         }
-    //     }
-    // }
-
     pthread_mutex_destroy(&srv->lock);
     free(srv);
 }
@@ -141,8 +127,6 @@ void server_start(Server* srv) {
     while (srv->running) {
         int client_fd = accept(srv->server_fd, (struct sockaddr*)&client_addr, &client_len);
         if (client_fd < 0) {
-            if (!srv->running)
-                break;  // expected during shutdown
             perror("accept");
             continue;
         }

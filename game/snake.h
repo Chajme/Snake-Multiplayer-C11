@@ -3,7 +3,7 @@
 
 #define MAX_SNAKE_LENGTH 64
 
-typedef struct Position Position;
+typedef struct Segment Segment;
 typedef struct Snake Snake;
 
 Snake* snake_create(int startX, int startY);

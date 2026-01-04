@@ -1,23 +1,34 @@
 #include "snake.h"
+#include "../util/vector.h"
 
 #include <stdlib.h>
 
-struct Position {
+struct Segment {
     int x, y;
 };
 
 struct Snake {
-    Position segments[MAX_SNAKE_LENGTH];
-    int length;
+    Vector *segments;
+    // int length;
     int direction;
     int score;
 };
 
 Snake* snake_create(int startX, int startY) {
     Snake *s = malloc(sizeof(Snake));
-    s->segments[0].x = startX;
-    s->segments[0].y = startY;
-    s->length = 3;
+    if (!s) return NULL;
+
+    s->segments = vector_new(sizeof(Segment), NULL, NULL); // allocate the vector!
+
+    Segment head = { startX, startY };
+
+    vector_push_back(s->segments, &head);
+
+    // initial length = 3
+    for (int i = 1; i < 3; i++) {
+        vector_push_back(s->segments, &head);
+    }
+
     s->direction = 1;   // napr. doprava
     s->score = 0;
     return s;
@@ -25,23 +36,29 @@ Snake* snake_create(int startX, int startY) {
 
 void snake_destroy(Snake* s) {
     if (!s) return;
+    vector_free(s->segments);
     free(s);
 }
 
 void snake_move(Snake* s, int width, int height) {
     if (!s) return;
 
-    // posun segmentov od tail ku hlave
-    for (int i = s->length - 1; i > 0; i--) {
-        s->segments[i] = s->segments[i-1];
+    size_t len = vector_get_size(s->segments);
+
+    // shift segments tail → head
+    for (size_t i = len - 1; i > 0; i--) {
+        Segment *curr = vector_get(s->segments, i);
+        Segment *prev = vector_get(s->segments, i - 1);
+        *curr = *prev;
     }
 
-    Position* head = &s->segments[0];
-    switch(s->direction) {
-        case 0: head->y--; break; // hore
-        case 1: head->x++; break; // pravo
-        case 2: head->y++; break; // dole
-        case 3: head->x--; break; // ľavo
+    Segment *head = vector_get(s->segments, 0);
+
+    switch (s->direction) {
+        case 0: head->y--; break;
+        case 1: head->x++; break;
+        case 2: head->y++; break;
+        case 3: head->x--; break;
     }
 
     // wrap-around
@@ -49,14 +66,16 @@ void snake_move(Snake* s, int width, int height) {
     if (head->x >= width) head->x = 0;
     if (head->y < 0) head->y = height - 1;
     if (head->y >= height) head->y = 0;
+
 }
 
 void snake_grow(Snake* s) {
-    if (s->length < MAX_SNAKE_LENGTH) {
-        s->segments[s->length] = s->segments[s->length - 1]; // pridáme segment na koniec
-        s->length++;
-        s->score++;
-    }
+    if (!s) return;
+
+    Segment *tail = vector_get(s->segments, vector_get_size(s->segments) - 1);
+    vector_push_back(s->segments, tail);
+
+    s->score++;
 }
 
 void snake_set_direction(Snake* s, int direction) {
@@ -74,40 +93,41 @@ void snake_set_direction(Snake* s, int direction) {
 }
 
 int snake_check_self_collision(const Snake* s) {
-    if (!s || s->length < 4) return 0;
+    if (!s || vector_get_size(s->segments) < 4) return 0;
 
-    int head_x = s->segments[0].x;
-    int head_y = s->segments[0].y;
+    Segment *head = vector_get((Vector*)&s->segments, 0);
 
-    for (int i = 1; i < s->length; i++) {
-        if (s->segments[i].x == head_x &&
-            s->segments[i].y == head_y) {
+    for (size_t i = 1; i < vector_get_size(s->segments); i++) {
+        Segment *seg = vector_get((Vector*)&s->segments, i);
+        if (seg->x == head->x && seg->y == head->y)
             return 1;
-            }
     }
     return 0;
 }
 
-
 void snake_set_position(Snake* s, int x, int y) {
     if (!s) return;
-    s->segments[0].x = x;
-    s->segments[0].y = y;
+
+    Segment *seg =vector_get(s->segments, 0);
+    if (!seg) return;
+
+    seg->x = x;
+    seg->y = y;
 }
 
 int snake_get_x(Snake* s) {
     if (!s) return 0;
-    return s->segments[0].x;
+    return snake_get_segment_x(s, 0);
 }
 
 int snake_get_y(Snake* s) {
     if (!s) return 0;
-    return s->segments[0].y;
+    return snake_get_segment_y(s, 0);
 }
 
 int snake_get_length(Snake *s) {
     if (!s) return 0;
-    return s->length;
+    return vector_get_size(s->segments);
 }
 
 int snake_get_score(Snake* s) {
@@ -116,11 +136,11 @@ int snake_get_score(Snake* s) {
 }
 
 int snake_get_segment_x(Snake *s, int segment) {
-    if (!s) return 0;
-    return s->segments[segment].x;
+    Segment *seg = vector_get(s->segments, segment);
+    return seg ? seg->x : 0;
 }
 
 int snake_get_segment_y(Snake *s, int segment) {
-    if (!s) return 0;
-    return s->segments[segment].y;
+    Segment *seg = vector_get(s->segments, segment);
+    return seg ? seg->y : 0;
 }
