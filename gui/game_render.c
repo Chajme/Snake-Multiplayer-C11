@@ -42,7 +42,7 @@ int renderer_init(GameRenderer** gr, const char* title, int width, int height, i
     r->overlay_active = false;
 
     // Load font
-    r->font = TTF_OpenFont("../font/PlayfulTime-BLBB8.ttf", 32);
+    r->font = TTF_OpenFont("../gui/font/PlayfulTime-BLBB8.ttf", 32);
     if (!r->font) {
         SDL_DestroyRenderer(r->renderer);
         SDL_DestroyWindow(r->window);
