@@ -7,12 +7,14 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 
 struct Server {
     int port;
     int server_fd;
     int client_fds[MAX_CLIENTS];
     pthread_t threads[MAX_CLIENTS];
+    pthread_t accept_thread;
     pthread_mutex_t lock;
     bool running;
 
@@ -29,6 +31,13 @@ typedef struct {
     int client_idx;
 } ClientThreadData;
 
+static volatile sig_atomic_t shutdown_requested = 0;
+
+static void handle_signal(int sig) {
+    (void)sig;
+    shutdown_requested = 1;
+}
+
 static void *client_thread(void *arg) {
     ClientThreadData *data = (ClientThreadData*)arg;
     Server *srv = data->server;
@@ -38,7 +47,7 @@ static void *client_thread(void *arg) {
     char buffer[BUFFER_SIZE];
 
     while (srv->running) {
-        int n = read(srv->client_fds[idx], buffer, sizeof(buffer - 1));
+        int n = read(srv->client_fds[idx], buffer, sizeof(buffer) - 1);
         if (n <= 0) break;
 
         buffer[n] = '\0';
@@ -46,11 +55,13 @@ static void *client_thread(void *arg) {
         server_push_input(srv, idx, input);
     }
 
-    close(srv->client_fds[idx]);
-
     pthread_mutex_lock(&srv->lock);
+    int fd = srv->client_fds[idx];
     srv->client_fds[idx] = -1;
     pthread_mutex_unlock(&srv->lock);
+
+    if (fd != -1)
+        close(fd);
 
     return NULL;
 }
@@ -106,18 +117,18 @@ Server* server_create(int port) {
 void server_destroy(Server* srv) {
     if (!srv) return;
 
-    srv->running = false;
-    close(srv->server_fd);
+    // srv->running = false;
+    // close(srv->server_fd);
 
     // Join all threads before cleaning up
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (srv->client_fds[i] != -1) {
-            close(srv->client_fds[i]);
-            if (pthread_join(srv->threads[i], NULL) != 0) {
-                perror("Failed to join client thread");
-            }
-        }
-    }
+    // for (int i = 0; i < MAX_CLIENTS; i++) {
+    //     if (srv->client_fds[i] != -1) {
+    //         close(srv->client_fds[i]);
+    //         if (pthread_join(srv->threads[i], NULL) != 0) {
+    //             perror("Failed to join client thread");
+    //         }
+    //     }
+    // }
 
     pthread_mutex_destroy(&srv->lock);
     free(srv);
@@ -130,7 +141,9 @@ void server_start(Server* srv) {
     while (srv->running) {
         int client_fd = accept(srv->server_fd, (struct sockaddr*)&client_addr, &client_len);
         if (client_fd < 0) {
-            perror("Accept failed");
+            if (!srv->running)
+                break;  // expected during shutdown
+            perror("accept");
             continue;
         }
 
@@ -158,9 +171,50 @@ void server_start(Server* srv) {
         data->server = srv;
         data->client_idx = idx;
         pthread_create(&srv->threads[idx], NULL, client_thread, data);
-        pthread_detach(srv->threads[idx]);
+        // pthread_detach(srv->threads[idx]);
 
         printf("Client %d connected\n", idx);
+    }
+}
+
+void server_start_async(Server* srv) {
+    pthread_create(&srv->accept_thread, NULL, server_start_thread, srv);
+    // pthread_detach(srv->accept_thread);
+}
+
+void server_stop(Server *srv) {
+    if (!srv) return;
+
+    pthread_mutex_lock(&srv->lock);
+    srv->running = false;
+    pthread_mutex_unlock(&srv->lock);
+
+    // This unblocks accept()
+    shutdown(srv->server_fd, SHUT_RDWR);
+    close(srv->server_fd);
+
+    // Wait for accept loop to exit
+    // pthread_join(srv->accept_thread, NULL);
+
+    // Close all client sockets (client threads will exit)
+    pthread_mutex_lock(&srv->lock);
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (srv->client_fds[i] != -1) {
+            shutdown(srv->client_fds[i], SHUT_RDWR);
+            close(srv->client_fds[i]);
+            srv->client_fds[i] = -1;
+        }
+    }
+    pthread_mutex_unlock(&srv->lock);
+
+    // Wait for accept thread to exit
+    pthread_join(srv->accept_thread, NULL);
+
+    // Wait for all client threads to exit
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (srv->threads[i]) {
+            pthread_join(srv->threads[i], NULL);
+        }
     }
 }
 
@@ -200,6 +254,9 @@ bool server_get_next_input(Server* srv, int* client_idx, int* input) {
 }
 
 int main(void) {
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
+
     Server* srv = server_create(1337);
     if (!srv) {
         fprintf(stderr, "Failed to create server\n");
@@ -207,8 +264,9 @@ int main(void) {
     }
 
     // Start listening for clients
-    pthread_t server_thread;
-    pthread_create(&server_thread, NULL, server_start_thread, srv);
+    // pthread_t server_thread;
+    // pthread_create(&server_thread, NULL, server_start_thread, srv);
+    server_start_async(srv);
 
     // Create the game
     Game* g = game_create(60, 45);
@@ -216,7 +274,7 @@ int main(void) {
     Snake* snakes[MAX_CLIENTS] = {0};
 
     // Game loop
-    while (srv->running) {
+    while (srv->running && !shutdown_requested) {
         int client_idx, input;
 
         while (server_get_next_input(srv, &client_idx, &input)) {
@@ -248,18 +306,6 @@ int main(void) {
         // Send game state to all clients
         GameState* state = game_get_state(g);
         SerializedGameState s;
-        // s.num_snakes = gamestate_get_num_snakes(state);
-        // for (int i = 0; i < s.num_snakes; i++) {
-        //     s.snake_lengths[i] = gamestate_get_snake_length(state, i);
-        //     s.snake_alive[i] = gamestate_is_snake_alive(state, i);
-        //     for (int j = 0; j < s.snake_lengths[i]; j++) {
-        //         s.snake_x[i][j] = gamestate_get_snake_segment_x(state, i, j);
-        //         s.snake_y[i][j] = gamestate_get_snake_segment_y(state, i, j);
-        //     }
-        //     s.snake_scores[i] = gamestate_get_snake_score(state, i);
-        // }
-        // s.fruit_x = gamestate_get_fruit_x(state);
-        // s.fruit_y = gamestate_get_fruit_y(state);
         gamestate_serialize(state, &s);
         server_broadcast_state(srv, &s);
         game_free_state(state);
@@ -267,6 +313,7 @@ int main(void) {
         usleep(100000); // ~10 FPS
     }
 
+    server_stop(srv);
     game_destroy(g);
     server_destroy(srv);
     return 0;

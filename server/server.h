@@ -16,6 +16,8 @@ Server* server_create(int port);
 
 // Starts listening for clients and handling them
 void server_start(Server* srv);
+void server_start_async(Server* srv);
+void server_stop(Server *srv);
 
 // Stops the server and cleans up resources
 void server_destroy(Server* srv);
