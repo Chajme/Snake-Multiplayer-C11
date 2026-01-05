@@ -106,6 +106,7 @@ bool client_receive_state(Client* c) {
         int n = (int)recv(c->sock, ptr + received, size - received, 0);
         if (n <= 0) {
             printf("Server shut down!\n");
+            c->connected = false;
             return false;
         }
         received += n;
@@ -129,7 +130,17 @@ void client_handle_input(Client* c, const SDL_Event* event) {
 
 void client_render(Client* c) {
     if (!c) return;
-    renderer_draw_serialized(c->renderer, &c->state, c->player_id);
+    renderer_draw_serialized(c->renderer, &c->state, c->player_id, c->connected);
+}
+
+bool client_is_connected(Client *c) {
+    if (!c) return false;
+    return c->connected;
+}
+
+void client_set_connected(Client *c, bool connected) {
+    if (!c) return;
+    c->connected = connected;
 }
 
 

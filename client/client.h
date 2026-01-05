@@ -15,5 +15,8 @@ bool client_receive_state(Client *c);
 void client_handle_input(Client *c, const SDL_Event *event);
 void client_render(Client *c);
 
+bool client_is_connected(Client *c);
+void client_set_connected(Client *c, bool connected);
+
 
 #endif

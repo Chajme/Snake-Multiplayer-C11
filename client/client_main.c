@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
     // int port = atoi(argv[2]);
 
     // Client* client = client_create(ip, port, 60, 45, 20);
-    Client* client = client_create("127.0.0.1", 1338, 60, 45, 20);
+    Client* client = client_create("127.0.0.1", 1337, 60, 45, 20);
     if (!client) return -1;
 
     SDL_Event event;
@@ -26,7 +26,9 @@ int main(int argc, char* argv[]) {
             client_handle_input(client, &event);
         }
 
-        if (!client_receive_state(client)) quit = true;
+        if (!client_receive_state(client)) {
+            client_set_connected(client, false);
+        }
 
         client_render(client);
 

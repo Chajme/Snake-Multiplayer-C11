@@ -185,7 +185,7 @@ void renderer_draw_game(GameRenderer* gr, GameState* state) {
     SDL_RenderPresent(gr->renderer);
 }
 
-void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, const int snake_id) {
+void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, const int snake_id, const bool client_connected) {
     if (!gr || !s) return;
 
 
@@ -222,6 +222,12 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, co
     };
     SDL_RenderFillRect(gr->renderer, &fr);
 
+    const int player_score = s->snake_scores[snake_id]; // Skóre hráča
+    char score_text[32];
+    snprintf(score_text, sizeof(score_text), "Score: %d", player_score);
+    const SDL_Color white = {255, 255, 255, 255};
+    renderer_draw_text(gr, score_text, gr->window_width - 120, 20, white);
+
     if (!s->snake_alive[snake_id] && !gr->overlay_active) {
         gr->overlay_active = true; // activate overlay once
     } else if (s->snake_alive[snake_id]) {
@@ -233,7 +239,43 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, co
         renderer_draw_game_over_overlay(gr, s->snake_scores[snake_id]);
     }
 
+    if (!client_connected) {
+        renderer_draw_server_shutdown_message(gr);
+    }
+
+
     SDL_RenderPresent(gr->renderer);
+}
+
+void renderer_draw_server_shutdown_message(GameRenderer* gr) {
+    SDL_SetRenderDrawBlendMode(gr->renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(gr->renderer, 0, 0, 0, 180);
+
+    const SDL_Rect overlay = {
+        0, 0,
+        gr->window_width * gr->cell_size,
+        gr->window_height * gr->cell_size
+    };
+    SDL_RenderFillRect(gr->renderer, &overlay);
+
+    // Draw a box
+    SDL_SetRenderDrawColor(gr->renderer, 255, 255, 255, 255);
+    const SDL_Rect box = {
+        overlay.w / 4,
+        overlay.h / 2 - 40,  // roughly vertically centered
+        overlay.w / 2,
+        125                    // height of the box
+    };
+    SDL_RenderDrawRect(gr->renderer, &box);
+
+    // Draw the "SERVER SHUTDOWN" text
+    const SDL_Color white = {255, 255, 255, 255};
+    renderer_draw_text(gr, "SERVER SHUTDOWN", overlay.w / 2 - 100, overlay.h / 2 - 16, white);
+
+    // Draw the score (this can be modified to suit your needs)
+    char score_text[32];
+    snprintf(score_text, sizeof(score_text), "Score: %d", 0);  // You can update the score as needed
+    renderer_draw_text(gr, score_text, overlay.w / 2 - 50, overlay.h / 2 + 20, white);
 }
 
 
