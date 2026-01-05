@@ -226,7 +226,7 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, co
     char score_text[32];
     snprintf(score_text, sizeof(score_text), "Score: %d", player_score);
     const SDL_Color white = {255, 255, 255, 255};
-    renderer_draw_text(gr, score_text, gr->window_width - 120, 20, white);
+    renderer_draw_text(gr, score_text, gr->window_width, 20, white);
 
     if (!s->snake_alive[snake_id] && !gr->overlay_active) {
         gr->overlay_active = true; // activate overlay once

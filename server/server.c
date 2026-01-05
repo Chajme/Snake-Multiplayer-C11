@@ -146,14 +146,6 @@ Server* server_create(const char* ip, int port) {
         return NULL;
     }
 
-    // int opt = 1;
-    // if (setsockopt(srv->server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-    //     perror("setsockopt");
-    //     close(srv->server_fd);
-    //     free(srv);
-    //     return NULL;
-    // }
-
     if (listen(srv->server_fd, MAX_CLIENTS) < 0) {
         perror("listen");
         close(srv->server_fd);
