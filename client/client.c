@@ -104,7 +104,10 @@ bool client_receive_state(Client* c) {
 
     while (received < size) {
         int n = (int)recv(c->sock, ptr + received, size - received, 0);
-        if (n <= 0) return false;
+        if (n <= 0) {
+            printf("Server shut down!\n");
+            return false;
+        }
         received += n;
     }
     return true;

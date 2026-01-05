@@ -108,29 +108,37 @@ static void* accept_thread_fn(void* arg) {
     return NULL;
 }
 
-Server* server_create(int port) {
+Server* server_create(const char* ip, int port) {
     Server* srv = calloc(1, sizeof(Server));
+    if (!srv) return NULL;
+
     srv->port = port;
     srv->running = true;
 
     pthread_mutex_init(&srv->lock, NULL);
 
-    for (int i = 0; i < MAX_CLIENTS; i++)
+    for (int i = 0; i < MAX_CLIENTS; i++) {
         srv->client_fds[i] = -1;
+    }
 
     srv->input_queue = queue_new(sizeof(InputEvent), 1024);
 
     srv->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (srv->server_fd < 0) {
         perror("socket");
+        free(srv);
         return NULL;
     }
 
-    struct sockaddr_in addr = {
-        .sin_family = AF_INET,
-        .sin_port = htons(port),
-        .sin_addr.s_addr = INADDR_ANY
-    };
+    struct sockaddr_in addr = {0};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+
+    if (inet_pton(AF_INET, ip, &addr.sin_addr) <= 0) {
+        perror("inet_pton");
+        free(srv);
+        return NULL;
+    }
 
     if (bind(srv->server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         perror("bind");

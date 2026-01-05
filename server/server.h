@@ -10,7 +10,7 @@
 typedef struct Server Server;
 
 /* Lifecycle */
-Server* server_create(int port);
+Server* server_create(const char *ip, int port);
 void server_start(Server* srv);
 void server_start_async(Server* srv);
 void server_stop(Server* srv);

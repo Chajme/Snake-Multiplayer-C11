@@ -4,7 +4,16 @@
 
 #include "client.h"
 
-int main(void) {
+int main(int argc, char* argv[]) {
+    // if (argc < 3) {
+    //     fprintf(stderr, "Usage: %s <server_ip> <port>\n", argv[0]);
+    //     return 1;
+    // }
+    //
+    // const char* ip = argv[1];
+    // int port = atoi(argv[2]);
+
+    // Client* client = client_create(ip, port, 60, 45, 20);
     Client* client = client_create("127.0.0.1", 1338, 60, 45, 20);
     if (!client) return -1;
 
