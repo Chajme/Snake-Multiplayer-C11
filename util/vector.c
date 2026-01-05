@@ -94,7 +94,7 @@ void *vector_get(Vector *v, size_t index)
     return (char*)v->data + index * v->elem_size;
 }
 
-size_t vector_get_size(Vector *v)
+size_t vector_get_size(const Vector *v)
 {
     return v ? v->size : 0;
 }

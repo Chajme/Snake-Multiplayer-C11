@@ -5,7 +5,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 
 #define MAX_CLIENTS 5
@@ -43,16 +42,16 @@ static void* client_thread_fn(void* arg) {
     int idx = ctx->idx;
     free(ctx);
 
-    char buf[BUFFER_SIZE];
+    // char buf[BUFFER_SIZE];
 
     printf("Client %d connected\n", idx);
 
     while (srv->running) {
         int net_dir;
-        int n = read(srv->client_fds[idx], &net_dir, sizeof(net_dir));
+        int n = (int)read(srv->client_fds[idx], &net_dir, sizeof(net_dir));
         if (n != sizeof(net_dir)) break;
 
-        int dir = ntohl(net_dir);
+        int dir = (int)ntohl(net_dir);
 
         InputEvent ev = { idx, dir };
 

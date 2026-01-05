@@ -2,8 +2,8 @@
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_timer.h>
 
-#include "game/game.h"
-#include "gui/game_render.h"
+#include "client/gui/game_render.h"
+#include "server/game/game.h"
 
 int main(void) {
     // 1. Create game and snake
@@ -37,7 +37,7 @@ int main(void) {
 
         // 3a Check whether the game hasn't ended
         if (!game_is_over(g)) {
-            game_update(g);
+            // game_update(g);
         }
 
         // 3b. Get game state and render

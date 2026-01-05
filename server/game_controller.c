@@ -38,7 +38,7 @@ void game_controller_destroy(GameController* c) {
     free(c);
 }
 
-static void process_inputs(GameController* c) {
+static void process_inputs(const GameController* c) {
     int player, dir;
 
     while (server_poll_input(c->server, &player, &dir)) {
@@ -59,7 +59,7 @@ static void process_inputs(GameController* c) {
     }
 }
 
-static void handle_disconnects(GameController* c) {
+static void handle_disconnects(const GameController* c) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (!server_is_client_connected(c->server, i)) {
             // Only reset the snake if it exists/alive

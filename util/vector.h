@@ -17,7 +17,7 @@ void vector_free(Vector* v);
 /* API */
 int  vector_push_back(Vector *v, const void *elem);
 void *vector_get(Vector *v, size_t index);
-size_t vector_get_size(Vector *v);
+size_t vector_get_size(const Vector *v);
 void vector_clear(Vector *v);
 
 void vector_print(Vector *v, vec_print print);

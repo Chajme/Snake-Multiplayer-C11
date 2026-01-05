@@ -119,6 +119,7 @@ void client_handle_input(Client* c, const SDL_Event* event) {
         case SDLK_RIGHT: dir = 1; break;
         case SDLK_DOWN:  dir = 2; break;
         case SDLK_LEFT:  dir = 3; break;
+        default: ;
     }
     if (dir != -1) client_send_input(c, dir);
 }
