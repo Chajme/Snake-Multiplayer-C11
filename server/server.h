@@ -1,6 +1,6 @@
 
-#ifndef GAME_SERVER_H
-#define GAME_SERVER_H
+#ifndef SNAKEGAME_SERVER_H
+#define SNAKEGAME_SERVER_H
 #include <stdbool.h>
 #include "../common/game_protocol.h"
 
@@ -26,4 +26,4 @@ bool server_poll_input(Server* srv, int* player_id, int* direction);
 bool server_is_running(const Server* srv);
 bool server_is_client_connected(const Server *srv, int player_id);
 
-#endif //GAME_SERVER_H
+#endif

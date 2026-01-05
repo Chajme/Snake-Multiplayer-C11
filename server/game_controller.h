@@ -1,5 +1,5 @@
-#ifndef GAME_GAME_CONTROLLER_H
-#define GAME_GAME_CONTROLLER_H
+#ifndef SNAKEGAME_CONTROLLER_H
+#define SNAKEGAME_CONTROLLER_H
 
 #include "server.h"
 
@@ -13,4 +13,4 @@ void game_controller_destroy(GameController* ctrl);
 void game_controller_run(GameController* ctrl);
 void game_controller_tick(GameController* c);
 
-#endif //GAME_GAME_CONTROLLER_H
+#endif

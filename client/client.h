@@ -1,6 +1,6 @@
 
-#ifndef GAME_CLIENT_H
-#define GAME_CLIENT_H
+#ifndef SNAKEGAME_CLIENT_H
+#define SNAKEGAME_CLIENT_H
 #include <SDL_events.h>
 #include <stdbool.h>
 
@@ -16,4 +16,4 @@ void client_handle_input(Client *c, const SDL_Event *event);
 void client_render(Client *c);
 
 
-#endif //GAME_CLIENT_H
+#endif

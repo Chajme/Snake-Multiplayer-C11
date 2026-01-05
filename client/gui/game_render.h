@@ -1,5 +1,5 @@
-#ifndef SNAKEGAMEREFACTORED_GAME_RENDER_H
-#define SNAKEGAMEREFACTORED_GAME_RENDER_H
+#ifndef SNAKEGAME_RENDER_H
+#define SNAKEGAME_RENDER_H
 
 #include <SDL_pixels.h>
 
@@ -19,4 +19,4 @@ void renderer_draw_game_over_overlay(const GameRenderer *gr, int score);
 void renderer_draw_text(const GameRenderer* gr, const char* text, int x, int y, SDL_Color color);
 void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, int snake_id);
 
-#endif //SNAKEGAMEREFACTORED_GAME_RENDER_H
+#endif

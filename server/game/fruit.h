@@ -1,6 +1,6 @@
 
-#ifndef SNAKEGAMEREFACTORED_FRUIT_H
-#define SNAKEGAMEREFACTORED_FRUIT_H
+#ifndef SNAKEGAME_FRUIT_H
+#define SNAKEGAME_FRUIT_H
 
 typedef struct Fruit Fruit;
 
@@ -13,4 +13,4 @@ int fruit_get_y(const Fruit *f);
 
 void fruit_new_coordinates(Fruit *f, int width, int height);
 
-#endif //SNAKEGAMEREFACTORED_FRUIT_H
+#endif

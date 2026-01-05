@@ -1,6 +1,6 @@
 
-#ifndef GAME_BACKUP_2_VECTOR_H
-#define GAME_BACKUP_2_VECTOR_H
+#ifndef SNAKEGAME_VECTOR_H
+#define SNAKEGAME_VECTOR_H
 #include <stddef.h>
 
 /* Function pointer types */
@@ -23,4 +23,4 @@ void vector_clear(Vector *v);
 void vector_print(Vector *v, vec_print print);
 
 
-#endif //GAME_BACKUP_2_VECTOR_H
+#endif

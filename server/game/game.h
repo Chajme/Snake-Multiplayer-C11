@@ -1,6 +1,6 @@
 
-#ifndef SNAKEGAMEREFACTORED_GAME_H
-#define SNAKEGAMEREFACTORED_GAME_H
+#ifndef SNAKEGAME_GAME_H
+#define SNAKEGAME_GAME_H
 
 #include "snake.h"
 #include "../../common/game_protocol.h"
