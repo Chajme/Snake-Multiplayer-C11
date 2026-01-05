@@ -1,5 +1,5 @@
-#ifndef GAME_GAME_PROTOCOL_H
-#define GAME_GAME_PROTOCOL_H
+#ifndef SNAKEGAME_PROTOCOL_H
+#define SNAKEGAME_PROTOCOL_H
 
 #pragma once
 #include <stdbool.h>
@@ -23,4 +23,4 @@ typedef struct {
     int player_id;
 } AssignPlayerMsg;
 
-#endif //GAME_GAME_PROTOCOL_H
+#endif
