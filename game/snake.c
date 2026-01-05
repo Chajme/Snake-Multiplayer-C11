@@ -115,32 +115,32 @@ void snake_set_position(Snake* s, int x, int y) {
     seg->y = y;
 }
 
-int snake_get_x(Snake* s) {
+int snake_get_x(const Snake* s) {
     if (!s) return 0;
     return snake_get_segment_x(s, 0);
 }
 
-int snake_get_y(Snake* s) {
+int snake_get_y(const Snake* s) {
     if (!s) return 0;
     return snake_get_segment_y(s, 0);
 }
 
-int snake_get_length(Snake *s) {
+int snake_get_length(const Snake *s) {
     if (!s) return 0;
-    return vector_get_size(s->segments);
+    return (int)vector_get_size(s->segments);
 }
 
-int snake_get_score(Snake* s) {
+int snake_get_score(const Snake* s) {
     if (!s) return 0;
     return s->score;
 }
 
-int snake_get_segment_x(Snake *s, int segment) {
+int snake_get_segment_x(const Snake *s, int segment) {
     Segment *seg = vector_get(s->segments, segment);
     return seg ? seg->x : 0;
 }
 
-int snake_get_segment_y(Snake *s, int segment) {
+int snake_get_segment_y(const Snake *s, int segment) {
     Segment *seg = vector_get(s->segments, segment);
     return seg ? seg->y : 0;
 }

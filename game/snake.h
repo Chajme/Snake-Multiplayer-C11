@@ -15,12 +15,12 @@ void snake_set_position(Snake* s, int x, int y);
 void snake_grow(Snake* s);
 int snake_check_self_collision(const Snake* s);
 
-int snake_get_x(Snake* s);
-int snake_get_y(Snake* s);
+int snake_get_x(const Snake* s);
+int snake_get_y(const Snake* s);
 
-int snake_get_length(Snake *s);
-int snake_get_score(Snake* s);
-int snake_get_segment_x(Snake *s, int segment);
-int snake_get_segment_y(Snake *s, int segment);
+int snake_get_length(const Snake *s);
+int snake_get_score(const Snake* s);
+int snake_get_segment_x(const Snake *s, int segment);
+int snake_get_segment_y(const Snake *s, int segment);
 
 #endif //SNAKEGAME_SNAKE_H

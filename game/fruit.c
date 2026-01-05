@@ -31,12 +31,12 @@ void fruit_new_coordinates(Fruit *f, int width, int height) {
     f->y = rand() % height;
 }
 
-int fruit_get_x(Fruit *f) {
+int fruit_get_x(const Fruit *f) {
     if (!f) return 0;
     return f->x;
 }
 
-int fruit_get_y(Fruit *f) {
+int fruit_get_y(const Fruit *f) {
     if (!f) return 0;
     return f->y;
 }
