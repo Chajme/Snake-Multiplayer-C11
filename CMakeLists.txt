@@ -32,6 +32,7 @@ add_executable(client
         ${GAME_SOURCES}
         client/gui/game_render.c
         client/client.c
+        client/client_main.c
 )
 
 # Find SDL2 and SDL2_ttf via pkg-config

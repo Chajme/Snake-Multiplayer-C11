@@ -14,7 +14,7 @@ struct GameRenderer {
     bool overlay_active;
 };
 
-int renderer_init(GameRenderer** gr, const char* title, int width, int height, int cell_size) {
+int renderer_init(GameRenderer** gr, const char* title, const int width, const int height, const int cell_size) {
     *gr = malloc(sizeof(GameRenderer));
     GameRenderer* r = *gr;
 
@@ -67,9 +67,9 @@ void renderer_destroy(GameRenderer* gr) {
     free(gr);
 }
 
-SDL_Color renderer_generate_snake_color(int player_id) {
+SDL_Color renderer_generate_snake_color(const int player_id) {
     // A fixed palette of distinguishable colors
-    SDL_Color palette[] = {
+    const SDL_Color palette[] = {
         {0, 255, 0, 255},    // green
         {0, 0, 255, 255},    // blue
         {255, 255, 0, 255},  // yellow
@@ -80,13 +80,13 @@ SDL_Color renderer_generate_snake_color(int player_id) {
         {255, 192, 203, 255} // pink
     };
 
-    int palette_size = sizeof(palette) / sizeof(palette[0]);
+    const int palette_size = sizeof(palette) / sizeof(palette[0]);
 
     // Wrap around if player_id >= palette_size
     return palette[player_id % palette_size];
 }
 
-void renderer_draw_text(const GameRenderer* gr, const char* text, int x, int y, SDL_Color color) {
+void renderer_draw_text(const GameRenderer* gr, const char* text, const int x, const int y, const SDL_Color color) {
     SDL_Surface* surf = TTF_RenderText_Blended(gr->font, text, color);
     if (!surf) return;
 
@@ -103,11 +103,11 @@ void renderer_draw_text(const GameRenderer* gr, const char* text, int x, int y, 
 }
 
 
-void renderer_draw_game_over_overlay(const GameRenderer *gr, int score) {
+void renderer_draw_game_over_overlay(const GameRenderer *gr, const int score) {
     SDL_SetRenderDrawBlendMode(gr->renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(gr->renderer, 0, 0, 0, 180);
 
-    SDL_Rect overlay = {
+    const SDL_Rect overlay = {
         0, 0,
         gr->window_width * gr->cell_size,
         gr->window_height * gr->cell_size
@@ -116,7 +116,7 @@ void renderer_draw_game_over_overlay(const GameRenderer *gr, int score) {
 
     // Hardcoded box
     SDL_SetRenderDrawColor(gr->renderer, 255, 255, 255, 255);
-    SDL_Rect box = {
+    const SDL_Rect box = {
         overlay.w / 4,
         overlay.h / 2 - 40,  // roughly vertically centered
         overlay.w / 2,
@@ -125,7 +125,7 @@ void renderer_draw_game_over_overlay(const GameRenderer *gr, int score) {
     SDL_RenderDrawRect(gr->renderer, &box);
 
     // Hardcoded text position
-    SDL_Color white = {255, 255, 255, 255};
+    const SDL_Color white = {255, 255, 255, 255};
     renderer_draw_text(gr, "GAME OVER", overlay.w / 2 - 75, overlay.h / 2 - 16, white);
 
     // Draw score below
@@ -134,7 +134,7 @@ void renderer_draw_game_over_overlay(const GameRenderer *gr, int score) {
     renderer_draw_text(gr, score_text, overlay.w / 2 - 50, overlay.h / 2 + 20, white);
 }
 
-void renderer_draw_grid(const GameRenderer* gr, int width, int height) {
+void renderer_draw_grid(const GameRenderer* gr, const int width, const int height) {
     SDL_SetRenderDrawColor(gr->renderer, 50, 50, 50, 255); // dark gray
     for (int x = 0; x <= width; x++) {
         SDL_RenderDrawLine(gr->renderer, x * gr->cell_size, 0, x * gr->cell_size, height * gr->cell_size);
@@ -155,9 +155,9 @@ void renderer_draw_game(GameRenderer* gr, GameState* state) {
 
     // Draw snakes
     SDL_SetRenderDrawColor(gr->renderer, 0, 255, 0, 255);
-    int num = gamestate_get_num_snakes(state);
+    const int num = gamestate_get_num_snakes(state);
     for (int i = 0; i < num; i++) {
-        int len = gamestate_get_snake_length(state, i);
+        const int len = gamestate_get_snake_length(state, i);
         for (int j = 0; j < len; j++) {
             SDL_Rect r;
             r.x = gamestate_get_snake_segment_x(state, i, j) * gr->cell_size;
@@ -169,7 +169,7 @@ void renderer_draw_game(GameRenderer* gr, GameState* state) {
 
     // Draw fruit
     SDL_SetRenderDrawColor(gr->renderer, 255, 0, 0, 255);
-    SDL_Rect fr = {
+    const SDL_Rect fr = {
         gamestate_get_fruit_x(state) * gr->cell_size,
         gamestate_get_fruit_y(state) * gr->cell_size,
         gr->cell_size,
@@ -178,14 +178,14 @@ void renderer_draw_game(GameRenderer* gr, GameState* state) {
     SDL_RenderFillRect(gr->renderer, &fr);
 
     if (gamestate_is_game_over(state)) {
-        int player_score = gamestate_get_snake_score(state, 0);
+        const int player_score = gamestate_get_snake_score(state, 0);
         renderer_draw_game_over_overlay(gr, player_score);
     }
 
     SDL_RenderPresent(gr->renderer);
 }
 
-void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, int snake_id) {
+void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, const int snake_id) {
     if (!gr || !s) return;
 
 
@@ -200,7 +200,7 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, in
     for (int i = 0; i < s->num_snakes; i++) {
         if (!s->snake_alive[i]) continue;
 
-        SDL_Color color = renderer_generate_snake_color(i);
+        const SDL_Color color = renderer_generate_snake_color(i);
         SDL_SetRenderDrawColor(gr->renderer, color.r, color.g, color.b, color.a);
 
         for (int j = 0; j < s->snake_lengths[i]; j++) {
@@ -214,7 +214,7 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, in
 
     // Draw fruit
     SDL_SetRenderDrawColor(gr->renderer, 255, 0, 0, 255);
-    SDL_Rect fr = {
+    const SDL_Rect fr = {
         s->fruit_x * gr->cell_size,
         s->fruit_y * gr->cell_size,
         gr->cell_size,

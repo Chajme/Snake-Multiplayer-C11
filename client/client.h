@@ -1,22 +1,19 @@
 
 #ifndef GAME_CLIENT_H
 #define GAME_CLIENT_H
+#include <SDL_events.h>
 #include <stdbool.h>
-#include <stddef.h>
 
 typedef struct Client Client;
 
-Client* client_create(const char* ip, int port);
-void client_destroy(Client* c);
+Client *client_create(const char *ip, int port, int width, int height, int cell_size);
+void client_destroy(Client *c);
 
-// Send a single input (direction)
-void client_send_input(Client* c, int input);
+void client_sent_input(Client *c, int direction);
+bool client_receive_state(Client *c);
 
-// Receive game state from server (blocking)
-bool client_receive_state(const Client* c, void* buffer, size_t size);
-
-// Check if client is connected
-bool client_is_connected(Client* c);
+void client_handle_input(Client *c, const SDL_Event *event);
+void client_render(Client *c);
 
 
 #endif //GAME_CLIENT_H
