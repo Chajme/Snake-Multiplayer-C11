@@ -7,14 +7,14 @@ struct Fruit {
     int x, y;
 };
 
-Fruit *create_fruit(int width, int height) {
+Fruit *fruit_create(int width, int height) {
     srand(time(NULL));
     Fruit *f = malloc(sizeof(Fruit));
     fruit_new_coordinates(f, width, height);
     return f;
 }
 
-void destroy_fruit(Fruit *f) {
+void fruit_destroy(Fruit *f) {
     if (!f) return;
     free(f);
 }

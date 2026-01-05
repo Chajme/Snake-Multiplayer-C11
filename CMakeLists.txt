@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(server/game C)
+project(game_backup_2 C)
 
 set(CMAKE_C_STANDARD 11)
 
@@ -10,6 +10,8 @@ set(GAME_SOURCES
         server/game/snake.c
         server/game/game.c
         server/game/fruit.c
+        server/game_controller.c
+        server/server.c
 )
 
 # Singleplayer executable
@@ -22,7 +24,7 @@ add_executable(game
 # Server executable (no SDL needed)
 add_executable(server
         ${GAME_SOURCES}
-        server/server.c
+        server/server_main.c
 )
 
 # Client executable (GUI)

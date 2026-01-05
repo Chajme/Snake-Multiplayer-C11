@@ -3,32 +3,27 @@
 #define GAME_SERVER_H
 #include <stdbool.h>
 #include "../common/game_protocol.h"
-#include <stddef.h>
 
 #define MAX_CLIENTS 5
 #define BUFFER_SIZE 256
 
-typedef void (*ClientDisconnectCallback)(int client_idx, void* user_data);
 typedef struct Server Server;
 
-// Creates and initializes the server
+/* Lifecycle */
 Server* server_create(int port);
-
-// Starts listening for clients and handling them
 void server_start(Server* srv);
 void server_start_async(Server* srv);
-void server_stop(Server *srv);
-
-// Stops the server and cleans up resources
+void server_stop(Server* srv);
 void server_destroy(Server* srv);
 
-// Sends a message to all clients
-void server_broadcast_state(Server* srv, SerializedGameState* s);
+/* Networking */
+void server_broadcast_state(Server* srv, const SerializedGameState* state);
 
-// Pushes client input to server queue
-void server_push_input(Server* srv, int client_idx, int input);
+/* Input handling (event-based) */
+bool server_poll_input(Server* srv, int* player_id, int* direction);
 
-// Gets next input from queue (for game logic)
-bool server_get_next_input(Server* srv, int* client_idx, int* input);
+/* Status */
+bool server_is_running(const Server* srv);
+bool server_is_client_connected(const Server *srv, int player_id);
 
 #endif //GAME_SERVER_H

@@ -4,8 +4,8 @@
 
 typedef struct Fruit Fruit;
 
-Fruit *create_fruit(int width, int height);
-void destroy_fruit(Fruit *f);
+Fruit *fruit_create(int width, int height);
+void fruit_destroy(Fruit *f);
 
 void fruit_set_coordinates(Fruit *f, int x, int y);
 int fruit_get_x(const Fruit *f);

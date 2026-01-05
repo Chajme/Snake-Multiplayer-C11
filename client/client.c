@@ -7,6 +7,7 @@
 #include <SDL_events.h>
 #include <SDL_keycode.h>
 #include <SDL_timer.h>
+#include <SDL_ttf.h>
 #include <SDL2/SDL.h>
 #include "gui/game_render.h"
 #include "../common/game_protocol.h"
@@ -53,8 +54,10 @@ void client_destroy(Client* c) {
 void client_send_input(Client* c, int input) {
     if (!c || !c->connected) return;
     char buf[16];
-    snprintf(buf, sizeof(buf), "%d", input);
-    send(c->sock, buf, strlen(buf), 0);
+    // snprintf(buf, sizeof(buf), "%d", input);
+    // send(c->sock, buf, strlen(buf), 0);
+    int net_dir = htonl(input);
+    send(c->sock, &net_dir, sizeof(net_dir), 0);
 }
 
 bool client_receive_state(const Client* c, void* buffer, size_t size) {
@@ -65,6 +68,8 @@ bool client_receive_state(const Client* c, void* buffer, size_t size) {
         if (n <= 0) return false; // disconnected or error
         received += n;
     }
+
+    // printf("Received game state, size: %zu\n", received);
     return true;
 }
 
@@ -91,7 +96,8 @@ int main(void) {
     printf("Assigned player ID: %d\n", c->player_id);
 
     GameRenderer* gr = NULL;
-    if (renderer_init(&gr, "Snake Multiplayer", WIDTH, HEIGHT, CELL_SIZE) != 0) {
+    renderer_init(&gr, "Snake Multiplayer", WIDTH, HEIGHT, CELL_SIZE);
+    if (!gr) {
         fprintf(stderr, "Renderer init failed\n");
         client_destroy(c);
         return -1;
@@ -127,6 +133,8 @@ int main(void) {
     }
 
     renderer_destroy(gr);
+    TTF_Quit();
+    SDL_Quit();
     client_destroy(c);
     return 0;
 }

@@ -20,46 +20,140 @@ struct GameState {
 };
 
 struct Game {
-    int width, height;
+    int width;
+    int height;
     Snake* snakes[MAX_SNAKES];
-    int num_snakes;
     int snake_alive[MAX_SNAKES];
+    int num_snakes;
+
     Fruit *fruit;
+
+    GameState state;
 };
+
+static void game_sync_state(Game* g) {
+    GameState* s = &g->state;
+
+    s->num_snakes = g->num_snakes;
+    s->game_over = false;
+
+    for (int i = 0; i < g->num_snakes; i++) {
+        s->snake_alive[i] = g->snake_alive[i];
+
+        if (!g->snakes[i]) continue;
+
+        int len = snake_get_length(g->snakes[i]);
+        s->snake_lengths[i] = len;
+        s->snake_scores[i] = snake_get_score(g->snakes[i]);
+
+        for (int j = 0; j < len; j++) {
+            s->snake_segments_x[i][j] = snake_get_segment_x(g->snakes[i], j);
+            s->snake_segments_y[i][j] = snake_get_segment_y(g->snakes[i], j);
+        }
+    }
+
+    s->fruit_x = fruit_get_x(g->fruit);
+    s->fruit_y = fruit_get_y(g->fruit);
+}
+
+static bool game_check_player_collision(const Snake *head, const Snake *body) {
+    if (!head || !body) return false;
+
+    int hx = snake_get_x(head);
+    int hy = snake_get_y(head);
+
+    int len = snake_get_length(body);
+    for (int i = 0; i < len; i++) {
+        if (hx == snake_get_segment_x(body, i) &&
+            hy == snake_get_segment_y(body, i)) {
+            return true;
+            }
+    }
+
+    return false;
+}
 
 Game* game_create(int width, int height) {
     Game *g = malloc(sizeof(Game));
+    if (!g) return NULL;
+
     g->width = width;
     g->height = height;
+
+    g->fruit = fruit_create(width, height);
     g->num_snakes = 0;
-    memset(g->snake_alive, 1, sizeof(g->snake_alive));
 
-    g->fruit = create_fruit(width, height);
-    // g->is_game_over = 0;
+    for (int i = 0; i < MAX_SNAKES; i++) {
+        g->snakes[i] = NULL;
+        g->snake_alive[i] = false;
+    }
 
-    memset(g->snakes, 0, sizeof(g->snakes));
+    game_sync_state(g);
     return g;
 }
 
 void game_destroy(Game* g) {
     if (!g) return;
     for (int i = 0; i < g->num_snakes; i++) {
-        snake_destroy(g->snakes[i]);
+        if (g->snakes[i]) {
+            snake_destroy(g->snakes[i]);
+        }
     }
-    destroy_fruit(g->fruit);
+
+    fruit_destroy(g->fruit);
     free(g);
 }
 
 Snake* game_add_snake(Game* g, int start_x, int start_y) {
-    if (g->num_snakes >= MAX_SNAKES) return NULL;
+    if (!g || g->num_snakes >= MAX_SNAKES) return NULL;
 
     int idx = g->num_snakes;
     Snake *s = snake_create(start_x, start_y);
 
     g->snakes[idx] = s;
-    g->snake_alive[idx] = 1;
+    g->snake_alive[idx] = true;
     g->num_snakes++;
+
     return s;
+}
+
+Snake* game_reset_snake(Game *g, int idx) {
+    if (!g || idx < 0 || idx >= MAX_SNAKES) return NULL;
+
+    if (g->snakes[idx]) {
+        snake_destroy(g->snakes[idx]);
+    }
+
+    // Create fresh snake
+    g->snakes[idx] = snake_create(2 + idx * 3, 2 + idx * 2);
+    g->snake_alive[idx] = true;
+
+    if (idx >= g->num_snakes) {
+        g->num_snakes = idx + 1;
+    }
+
+    return g->snakes[idx];
+}
+
+void game_snake_set_direction(Game *g, int snake_idx, int direction) {
+    if (!g || snake_idx < 0 || snake_idx >= MAX_SNAKES) return;
+    if (!g->snake_alive[snake_idx]) return;
+
+    snake_set_direction(g->snakes[snake_idx], direction);
+}
+
+void game_set_snake_dead(Game* g, int snake_idx) {
+    if (!g || snake_idx < 0 || snake_idx >= g->num_snakes) return;
+    if (!g->snakes[snake_idx]) return; // already dead
+
+    g->snake_alive[snake_idx] = 0;
+}
+
+void game_set_snake_alive(Game* g, int snake_idx) {
+    if (!g || snake_idx < 0 || snake_idx >= g->num_snakes) return;
+    if (g->snakes[snake_idx]) return;
+
+    g->snake_alive[snake_idx] = 1;
 }
 
 void game_update(Game* g) {
@@ -76,63 +170,35 @@ void game_update(Game* g) {
             continue;
         }
 
+        // Check collision with other players
+        for (int j = 0; j < g->num_snakes; j++) {
+            if (i == j) continue;
+            if (!g->snake_alive[j]) continue;
+            if (!g->snakes[j]) continue;
+
+            if (game_check_player_collision(s, g->snakes[j])) {
+                game_set_snake_dead(g, i);
+                break;
+            }
+        }
+
         if (snake_get_x(s) == fruit_get_x(g->fruit) &&
             snake_get_y(s) == fruit_get_y(g->fruit)) {
+
             snake_grow(s);
             fruit_new_coordinates(g->fruit, g->width, g->height);
             }
     }
+
+    game_sync_state(g);
 }
 
-Snake* game_reset_snake(Game *g, int idx) {
-    if (idx < 0 || idx >= MAX_SNAKES) return NULL;
-
-    if (g->snakes[idx]) {
-        snake_destroy(g->snakes[idx]);
-    }
-
-    // Create fresh snake
-    g->snakes[idx] = snake_create(2 + idx * 3, 2 + idx * 2);
-    g->snake_alive[idx] = 1;
-
-    if (idx >= g->num_snakes) {
-        g->num_snakes = idx + 1;
-    }
-
-    return g->snakes[idx];
-}
-
-void game_snake_set_direction(Game *g, int snake_idx, int direction) {
-    if (snake_idx < 0 || snake_idx >= MAX_SNAKES) return;
-    if (!g) return;
-
-    if (g->snake_alive[snake_idx] == 1) {
-        snake_set_direction(g->snakes[snake_idx], direction);
-    }
-}
-
-void game_set_snake_dead(Game* g, int snake_idx) {
-    if (!g) return;
-    if (snake_idx < 0 || snake_idx >= g->num_snakes) return;
-    if (!g->snakes[snake_idx]) return; // already dead
-
-    g->snake_alive[snake_idx] = 0;
-}
-
-void game_set_snake_alive(Game* g, int snake_idx) {
-    if (!g) return;
-    if (snake_idx < 0 || snake_idx >= g->num_snakes) return;
-    if (g->snakes[snake_idx]) return;
-
-    g->snake_alive[snake_idx] = 1;
-}
-
-int game_get_width(Game *g) {
+int game_get_width(const Game *g) {
     if (!g) return 0;
     return g->width;
 }
 
-int game_get_heigth(Game *g) {
+int game_get_heigth(const Game *g) {
     if (!g) return 0;
     return g->height;
 }
@@ -173,78 +239,54 @@ void game_free_state(GameState* s) {
     free(s);
 }
 
-int gamestate_get_num_snakes(GameState* s) {
+int gamestate_get_num_snakes(const GameState* s) {
     return s ? s->num_snakes : 0;
 }
 
-int gamestate_get_snake_length(GameState* s, int snake) {
+int gamestate_get_snake_length(const GameState* s, int snake) {
     return (s && snake >= 0 && snake < s->num_snakes) ? s->snake_lengths[snake] : 0;
 }
 
-int gamestate_get_snake_score(GameState* s, int snake) {
+int gamestate_get_snake_score(const GameState* s, int snake) {
     return (s && snake >= 0 && snake < s->num_snakes) ? s->snake_scores[snake] : 0;
 }
 
-int gamestate_get_snake_segment_x(GameState* s, int snake, int segment) {
+int gamestate_get_snake_segment_x(const GameState* s, int snake, int segment) {
     if (!s || snake < 0 || snake >= s->num_snakes) return 0;
     if (segment < 0 || segment >= s->snake_lengths[snake]) return 0;
     return s->snake_segments_x[snake][segment];
 }
 
-int gamestate_get_snake_segment_y(GameState* s, int snake, int segment) {
+int gamestate_get_snake_segment_y(const GameState* s, int snake, int segment) {
     if (!s || snake < 0 || snake >= s->num_snakes) return 0;
     if (segment < 0 || segment >= s->snake_lengths[snake]) return 0;
     return s->snake_segments_y[snake][segment];
 }
 
-int gamestate_get_fruit_x(GameState* s) {
+int gamestate_get_fruit_x(const GameState* s) {
     return s ? s->fruit_x : 0;
 }
 
-int gamestate_get_fruit_y(GameState* s) {
+int gamestate_get_fruit_y(const GameState* s) {
     return s ? s->fruit_y : 0;
 }
 
-void gamestate_set_fruit(GameState *s, int fruit_x, int fruit_y) {
-    if (!s) return;
-    s->fruit_x = fruit_x;
-    s->fruit_y = fruit_y;
-}
-
-void gamestate_set_snake_score(GameState* state, int snake_idx, int score) {
-    if (!state) return;
-    if (snake_idx < 0 || snake_idx >= state->num_snakes) return;
-
-    state->snake_scores[snake_idx] = score;
-}
-
-void gamestate_set_snake_segment(GameState* state, int snake_idx, int segment_idx, int x, int y) {
-    if (!state) return;
-    if (snake_idx < 0 || snake_idx >= state->num_snakes) return;
-    if (segment_idx < 0 || segment_idx >= state->snake_lengths[snake_idx]) return;
-
-    state->snake_segments_x[snake_idx][segment_idx] = x;
-    state->snake_segments_y[snake_idx][segment_idx] = y;
-}
-
-int gamestate_is_game_over(GameState *s) {
-    if (!s) return 0;
-    return s->game_over;
-}
-
-void gamestate_set_game_over(GameState *s, int game_over) {
-    if (!s) return;
-    s->game_over = game_over;
-}
-
-int gamestate_is_snake_alive(GameState *state, int snake) {
+int gamestate_is_snake_alive(const GameState *state, int snake) {
     if (!state) return 0;
     if (snake < 0 || snake >= state->num_snakes) return 0;
     return state->snake_alive[snake];
 }
 
+int gamestate_is_game_over(const GameState *s) {
+    if (!s) return 0;
+    return s->game_over;
+}
 
-void gamestate_serialize(GameState* state, SerializedGameState* out) {
+void gamestate_serialize(const GameState* state, SerializedGameState* out) {
+    if (!state || !out) return;
+
+    memset(out, 0, sizeof(*out));
+
     out->num_snakes = state->num_snakes;
 
     for (int i = 0; i < out->num_snakes; i++) {
@@ -260,23 +302,4 @@ void gamestate_serialize(GameState* state, SerializedGameState* out) {
 
     out->fruit_x = state->fruit_x;
     out->fruit_y = state->fruit_y;
-}
-
-void gamestate_deserialize(GameState* state, const SerializedGameState* in) {
-    // update state via setters, not direct struct access
-    state->num_snakes = in->num_snakes;
-
-    for (int i = 0; i < in->num_snakes; i++) {
-        state->snake_alive[i] = in->snake_alive[i];
-
-        for (int j = 0; j < in->snake_lengths[i]; j++) {
-            gamestate_set_snake_segment(state, i, j,
-                                        in->snake_x[i][j],
-                                        in->snake_y[i][j]);
-        }
-
-        gamestate_set_snake_score(state, i, in->snake_scores[i]);
-    }
-
-    gamestate_set_fruit(state, in->fruit_x, in->fruit_y);
 }
