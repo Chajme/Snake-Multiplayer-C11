@@ -1,6 +1,6 @@
 
 #include "game.h"
-#include "../common/game_protocol.h"
+#include "../../common/game_protocol.h"
 
 #include <stdlib.h>
 #include <string.h>

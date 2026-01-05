@@ -3,7 +3,7 @@
 #define SNAKEGAMEREFACTORED_GAME_H
 
 #include "snake.h"
-#include "../common/game_protocol.h"
+#include "../../common/game_protocol.h"
 
 #define MAX_SNAKES 5
 

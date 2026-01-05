@@ -3,8 +3,8 @@
 
 #include <SDL_pixels.h>
 
-#include "../game/game.h"
-#include "../common/game_protocol.h"
+#include "../../server/game/game.h"
+#include "../../common/game_protocol.h"
 
 typedef struct GameRenderer GameRenderer;  // forward declaration
 

@@ -1,5 +1,5 @@
 #include "server.h"
-#include "../game/game.h"             // defines Game and GameState, game logic
+#include "game/game.h"             // defines Game and GameState, game logic
 #include "../common/game_protocol.h"// defines SerializedGameState
 #include "../util/queue.h"
 #include <stdlib.h>

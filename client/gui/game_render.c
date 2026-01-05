@@ -1,5 +1,5 @@
 #include "game_render.h"
-#include "../common/game_protocol.h"
+#include "../../common/game_protocol.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -42,8 +42,9 @@ int renderer_init(GameRenderer** gr, const char* title, int width, int height, i
     r->overlay_active = false;
 
     // Load font
-    r->font = TTF_OpenFont("../gui/font/PlayfulTime-BLBB8.ttf", 32);
+    r->font = TTF_OpenFont("../client/gui/font/PlayfulTime-BLBB8.ttf", 32);
     if (!r->font) {
+        fprintf(stderr, "TTF_OpenFont failed: %s\n", TTF_GetError());
         SDL_DestroyRenderer(r->renderer);
         SDL_DestroyWindow(r->window);
         TTF_Quit();

@@ -8,7 +8,7 @@
 #include <SDL_keycode.h>
 #include <SDL_timer.h>
 #include <SDL2/SDL.h>
-#include "../gui/game_render.h"
+#include "gui/game_render.h"
 #include "../common/game_protocol.h"
 
 #define WIDTH 60

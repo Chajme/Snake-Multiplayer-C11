@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(game C)
+project(server/game C)
 
 set(CMAKE_C_STANDARD 11)
 
@@ -7,15 +7,15 @@ set(CMAKE_C_STANDARD 11)
 set(GAME_SOURCES
         util/queue.c
         util/vector.c
-        game/snake.c
-        game/game.c
-        game/fruit.c
+        server/game/snake.c
+        server/game/game.c
+        server/game/fruit.c
 )
 
 # Singleplayer executable
 add_executable(game
         ${GAME_SOURCES}
-        gui/game_render.c
+        client/gui/game_render.c
         main.c           # your singleplayer main
 )
 
@@ -28,7 +28,7 @@ add_executable(server
 # Client executable (GUI)
 add_executable(client
         ${GAME_SOURCES}
-        gui/game_render.c
+        client/gui/game_render.c
         client/client.c
 )
 
