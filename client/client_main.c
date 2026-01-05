@@ -5,7 +5,7 @@
 #include "client.h"
 
 int main(void) {
-    Client* client = client_create("127.0.0.1", 1337, 60, 45, 20);
+    Client* client = client_create("127.0.0.1", 1338, 60, 45, 20);
     if (!client) return -1;
 
     SDL_Event event;

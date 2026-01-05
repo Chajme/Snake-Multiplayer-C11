@@ -16,7 +16,6 @@ typedef struct {
     bool snake_alive[MAX_SNAKES];
     int fruit_x;
     int fruit_y;
-    // bool game_over;
 } SerializedGameState;
 
 typedef struct {

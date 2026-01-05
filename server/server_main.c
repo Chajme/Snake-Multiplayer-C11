@@ -12,7 +12,7 @@ static void on_sigint(int sig) {
 int main(void) {
     signal(SIGINT, on_sigint);
 
-    Server* server = server_create(1337);
+    Server* server = server_create(1338);
     server_start_async(server);
 
     GameController* ctrl =

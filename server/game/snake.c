@@ -1,4 +1,7 @@
 #include "snake.h"
+
+#include <stdbool.h>
+
 #include "../../util/vector.h"
 
 #include <stdlib.h>
@@ -9,9 +12,9 @@ struct Segment {
 
 struct Snake {
     Vector *segments;
-    // int length;
     int direction;
     int score;
+    bool alive;
 };
 
 Snake* snake_create(int startX, int startY) {
@@ -31,6 +34,7 @@ Snake* snake_create(int startX, int startY) {
 
     s->direction = 1;   // napr. doprava
     s->score = 0;
+    s->alive = true;
     return s;
 }
 
@@ -143,4 +147,14 @@ int snake_get_segment_x(const Snake *s, int segment) {
 int snake_get_segment_y(const Snake *s, int segment) {
     Segment *seg = vector_get(s->segments, segment);
     return seg ? seg->y : 0;
+}
+
+bool snake_is_alive(const Snake* s) {
+    if (!s) return false;
+    return s->alive;
+}
+
+void snake_set_alive(Snake *s, bool alive) {
+    if (!s) return;
+    s->alive = alive;
 }

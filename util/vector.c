@@ -21,7 +21,7 @@ struct Vector {
 static int vector_init(Vector *v, size_t elem_size,
                        vec_copy copy, vec_destroy destroy)
 {
-    if (!v || elem_size == 0) return 0;
+    if (elem_size == 0) return 0;
 
     v->size = 0;
     v->capacity = INITIAL_CAPACITY;

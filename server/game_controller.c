@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "../util/vector.h"
+
 #define TICK_USEC 100000  // 10 FPS
 
 struct GameController {
@@ -43,29 +45,43 @@ static void process_inputs(GameController* c) {
         if (player < 0 || player >= MAX_CLIENTS)
             continue;
 
-        if (!c->snakes[player]) {
-            c->snakes[player] = game_reset_snake(c->game, player);
-            printf("Spawned snake for player %d\n", player);
+        GameState *state = game_get_state(c->game);
+        // Spawn or reset player
+        if (!gamestate_is_snake_alive(state, player)) {
+            game_spawn_player(c->game, player);
+
         }
 
+        // Set direction
         game_snake_set_direction(c->game, player, dir);
+
+        game_free_state(state);
     }
 }
 
 static void handle_disconnects(GameController* c) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (c->snakes[i] && !server_is_client_connected(c->server, i)) {
-            game_set_snake_dead(c->game, i);
-            c->snakes[i] = NULL;
-            printf("Client %d disconnected\n", i);
+        if (!server_is_client_connected(c->server, i)) {
+            // Only reset the snake if it exists/alive
+            GameState* state = game_get_state(c->game);
+            if (gamestate_is_snake_alive(state, i)) {
+                game_set_snake_dead(c->game, i); // Mark dead in Game
+                printf("Client %d disconnected, snake removed\n", i);
+            }
+            game_free_state(state);
         }
     }
+}
+
+static void handle_snake_death(Game* g, int idx) {
+    printf("Snake %d died!\n", idx);
+    game_set_snake_dead(g, idx);
 }
 
 void game_controller_tick(GameController* c) {
     // ensure_snakes_exist(c);
     process_inputs(c);
-    game_update(c->game);
+    game_update(c->game, handle_snake_death);
     handle_disconnects(c);
 
     GameState* state = game_get_state(c->game);

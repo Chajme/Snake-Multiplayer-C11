@@ -222,14 +222,6 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, co
     };
     SDL_RenderFillRect(gr->renderer, &fr);
 
-    // Draw game over overlay
-    // if (!s->snake_alive[snake_id]) {
-    //     renderer_draw_game_over_overlay(
-    //         gr,
-    //         s->snake_scores[snake_id]
-    //     );
-    // }
-
     if (!s->snake_alive[snake_id] && !gr->overlay_active) {
         gr->overlay_active = true; // activate overlay once
     } else if (s->snake_alive[snake_id]) {

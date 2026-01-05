@@ -10,17 +10,21 @@
 typedef struct Game Game;
 typedef struct GameState GameState;
 
+typedef void (*SnakeCollisionCallback)(Game *game, int snake_idx);
+
 // Lifecycle
 Game* game_create(int width, int height);
 void game_destroy(Game* g);
 
 // Game logic
-void game_update(Game* g); // pohyb hadov, kolízie, jedlo
+void game_update(Game* g, SnakeCollisionCallback on_collision); // pohyb hadov, kolízie, jedlo
 Snake* game_add_snake(Game* g, int start_x, int start_y);
 Snake* game_reset_snake(Game *g, int idx);
 void game_snake_set_direction(Game *g, int snake_idx, int direction);
 void game_set_snake_dead(Game* g, int snake_idx);
 void game_set_snake_alive(Game* g, int snake_idx);
+void game_player_reconnect(Game* g, int idx);
+Snake* game_spawn_player(Game* g, int player_idx);
 
 // Getters
 int game_get_width(const Game *g);
@@ -44,6 +48,5 @@ int gamestate_is_snake_alive(const GameState *state, int snake);
 
 // Serialization
 void gamestate_serialize(const GameState* state, SerializedGameState* out);
-// void gamestate_deserialize(GameState* state, const SerializedGameState* in);
 
-#endif //SNAKEGAMEREFACTORED_GAME_H
+#endif
