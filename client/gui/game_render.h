@@ -18,6 +18,6 @@ void renderer_draw_game(GameRenderer* gr, GameState* state);
 void renderer_draw_game_over_overlay(const GameRenderer *gr, int score);
 void renderer_draw_text(const GameRenderer* gr, const char* text, int x, int y, SDL_Color color);
 void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, int snake_id, bool client_connected);
-void renderer_draw_server_shutdown_message(GameRenderer* gr);
+void renderer_draw_server_shutdown_message(const GameRenderer* gr);
 
 #endif

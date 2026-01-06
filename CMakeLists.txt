@@ -18,7 +18,7 @@ set(GAME_SOURCES
 add_executable(game
         ${GAME_SOURCES}
         client/gui/game_render.c
-        main.c           # your singleplayer main
+        sdl_leak_test.c           # your singleplayer main
 )
 
 # Server executable (no SDL needed)

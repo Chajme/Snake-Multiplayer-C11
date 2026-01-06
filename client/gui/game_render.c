@@ -18,10 +18,13 @@ int renderer_init(GameRenderer** gr, const char* title, const int width, const i
     *gr = malloc(sizeof(GameRenderer));
     GameRenderer* r = *gr;
 
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) return -1;
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        renderer_destroy(*gr);
+        return -1;
+    }
 
     if (TTF_Init() != 0) {
-        SDL_Quit();
+        renderer_destroy(*gr);
         return -1;
     }
 
@@ -31,10 +34,16 @@ int renderer_init(GameRenderer** gr, const char* title, const int width, const i
                                  width * cell_size,
                                  height * cell_size,
                                  SDL_WINDOW_SHOWN);
-    if (!r->window) return -1;
+    if (!r->window) {
+        renderer_destroy(*gr);
+        return -1;
+    }
 
     r->renderer = SDL_CreateRenderer(r->window, -1, SDL_RENDERER_ACCELERATED);
-    if (!r->renderer) return -1;
+    if (!r->renderer) {
+        renderer_destroy(*gr);
+        return -1;
+    }
 
     r->cell_size = cell_size;
     r->window_width = width;
@@ -45,11 +54,7 @@ int renderer_init(GameRenderer** gr, const char* title, const int width, const i
     r->font = TTF_OpenFont("../client/gui/font/PlayfulTime-BLBB8.ttf", 32);
     if (!r->font) {
         fprintf(stderr, "TTF_OpenFont failed: %s\n", TTF_GetError());
-        SDL_DestroyRenderer(r->renderer);
-        SDL_DestroyWindow(r->window);
-        TTF_Quit();
-        SDL_Quit();
-        free(r);
+        renderer_destroy(*gr);
         return -1;
     }
 
@@ -247,7 +252,7 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, co
     SDL_RenderPresent(gr->renderer);
 }
 
-void renderer_draw_server_shutdown_message(GameRenderer* gr) {
+void renderer_draw_server_shutdown_message(const GameRenderer* gr) {
     SDL_SetRenderDrawBlendMode(gr->renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(gr->renderer, 0, 0, 0, 180);
 
@@ -277,6 +282,3 @@ void renderer_draw_server_shutdown_message(GameRenderer* gr) {
     snprintf(score_text, sizeof(score_text), "Score: %d", 0);  // You can update the score as needed
     renderer_draw_text(gr, score_text, overlay.w / 2 - 50, overlay.h / 2 + 20, white);
 }
-
-
-

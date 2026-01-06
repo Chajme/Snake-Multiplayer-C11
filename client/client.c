@@ -26,8 +26,8 @@ void client_destroy(Client* c) {
     if (!c) return;
 
     if (c->renderer) renderer_destroy(c->renderer);
-    TTF_Quit();
-    SDL_Quit();
+    // TTF_Quit();
+    // SDL_Quit();
 
     if (c->connected) close(c->sock);
     free(c);
@@ -67,13 +67,13 @@ Client* client_create(const char* ip, int port, int width, int height, int cell_
     c->connected = true;
 
     // Renderer setup
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
-        fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
-        close(c->sock);
-        free(c);
-        return NULL;
-    }
-    TTF_Init();
+    // if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
+    //     fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
+    //     close(c->sock);
+    //     free(c);
+    //     return NULL;
+    // }
+    // TTF_Init();
 
     c->width = width;
     c->height = height;
