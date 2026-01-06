@@ -214,7 +214,7 @@ void server_stop(Server* srv) {
 
 
 void server_start_async(Server* srv) {
-    pthread_create(&srv->accept_thread, NULL, accept_thread_fn, srv);
+    pthread_create(&srv->accept_thread, NULL, accept_thread, srv);
 }
 
 bool server_poll_input(Server* srv, int* player, int* dir) {
