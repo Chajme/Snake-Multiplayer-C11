@@ -1,3 +1,5 @@
+#include <locale.h>
+
 #include "server.h"
 #include "game_controller.h"
 
@@ -34,15 +36,17 @@ static int parse_arguments(int argc, char* argv[], char* out_ip, const size_t ip
 int main(int argc, char* argv[]) {
     signal(SIGINT, on_sigint);
 
-    // char ip[64];
-    // int port;
-    //
-    // if (!parse_arguments(argc, argv, ip, sizeof(ip), &port)) {
-    //     return 1;
-    // }
+    setlocale(LC_ALL, "sk_SK.UTF-8");
 
-    // Server* server = server_create(ip, port);
-    Server* server = server_create("127.0.0.1", 1337);
+    char ip[64];
+    int port;
+
+    if (!parse_arguments(argc, argv, ip, sizeof(ip), &port)) {
+        return 1;
+    }
+
+    Server* server = server_create(ip, port);
+    // Server* server = server_create("127.0.0.1", 1337);
     if (!server) return 1;
     server_start_async(server);
 

@@ -1,3 +1,5 @@
+#include <locale.h>
+
 #include "client.h"
 
 #include <SDL_events.h>
@@ -5,6 +7,8 @@
 #include <stdbool.h>
 
 int main(int argc, char* argv[]) {
+    setlocale(LC_ALL, "sk_SK.UTF-8");
+
     if (argc < 3) {
         fprintf(stderr, "Usage: %s <server_ip> <port>\n", argv[0]);
         return 1;

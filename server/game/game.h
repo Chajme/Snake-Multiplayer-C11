@@ -17,7 +17,7 @@ Game* game_create(int width, int height);
 void game_destroy(Game* g);
 
 // Game logic
-void game_update(Game* g, SnakeCollisionCallback on_collision); // pohyb hadov, kolízie, jedlo
+void game_update(Game* g, SnakeCollisionCallback on_collision);
 Snake* game_add_snake(Game* g, int start_x, int start_y);
 Snake* game_reset_snake(Game *g, int idx);
 void game_snake_set_direction(Game *g, int snake_idx, int direction);
