@@ -68,9 +68,7 @@ Client* client_create(const char* ip, int port, int width, int height, int cell_
     c->width = width;
     c->height = height;
     c->cell_size = cell_size;
-    c->renderer = NULL;
 
-    // renderer_init(&c->renderer, "Snake Multiplayer", width, height, cell_size);
     c->renderer = renderer_create("Snake Multiplayer", width, height, cell_size);
     if (!c->renderer) {
         fprintf(stderr, "Renderer init failed\n");

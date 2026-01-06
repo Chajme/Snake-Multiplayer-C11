@@ -22,4 +22,7 @@ bool server_poll_input(Server* srv, int* player_id, int* direction);
 bool server_is_running(const Server* srv);
 bool server_is_client_connected(const Server *srv, int player_id);
 
+// bool server_add_client(Server* srv, int client_fd);
+// void server_remove_client(Server* srv, int player_id);
+
 #endif

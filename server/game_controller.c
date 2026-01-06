@@ -51,7 +51,7 @@ static void process_inputs(const GameController* c) {
             game_spawn_player(c->game, player);
 
         }
-        // Set direction
+
         game_snake_set_direction(c->game, player, dir);
 
         game_free_state(state);
@@ -61,10 +61,9 @@ static void process_inputs(const GameController* c) {
 static void handle_disconnects(const GameController* c) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (!server_is_client_connected(c->server, i)) {
-            // Only reset the snake if it exists/alive
             GameState* state = game_get_state(c->game);
             if (gamestate_is_snake_alive(state, i)) {
-                game_set_snake_dead(c->game, i); // Mark dead in Game
+                game_set_snake_dead(c->game, i);
                 printf("Client %d disconnected, snake removed\n", i);
             }
             game_free_state(state);

@@ -299,7 +299,7 @@ void renderer_draw_server_shutdown_message(const GameRenderer* gr) {
     };
     SDL_RenderDrawRect(gr->renderer, &box);
 
-    // "SERVER SHUTDOWN" text
+    // SERVER SHUTDOWN" text
     const SDL_Color white = {255, 255, 255, 255};
     renderer_draw_text(gr, "SERVER SHUTDOWN", overlay.w / 2 - 100, overlay.h / 2 - 16, white);
 
