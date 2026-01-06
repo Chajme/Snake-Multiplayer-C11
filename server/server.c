@@ -46,11 +46,6 @@ static void* client_thread(void* arg) {
     while (srv->running) {
         int net_dir;
         int n = (int)read(srv->client_fds[idx], &net_dir, sizeof(net_dir));
-        if (n <= 0) {
-            // Client disconnected or error occurred
-            server_remove_client(srv, idx);
-            break;
-        }
         if (n != sizeof(net_dir)) break;
 
         int dir = (int)ntohl(net_dir);
@@ -66,7 +61,6 @@ static void* client_thread(void* arg) {
     close(srv->client_fds[idx]);
     srv->client_fds[idx] = -1;
     pthread_mutex_unlock(&srv->lock);
-    // server_remove_client(srv, idx);
 
     return NULL;
 }
@@ -93,7 +87,6 @@ static void* accept_thread(void* arg) {
 
         if (idx < 0) {
             close(fd);
-            printf("Server full, client connection refused, try again later\n");
             continue;
         }
 
@@ -166,8 +159,6 @@ Server* server_create(const char* ip, const int port) {
         printf("Server listening on %s:%d\n", ip_str, port);
     }
 
-    // printf("Server listening on port %d\n", srv->port);
-
     return srv;
 }
 
@@ -176,6 +167,7 @@ void server_destroy(Server* srv) {
 
     server_stop(srv);
 
+    // Server must already be stopped
     queue_free(srv->input_queue);
     pthread_mutex_destroy(&srv->lock);
 
@@ -200,7 +192,7 @@ void server_stop(Server* srv) {
     shutdown(srv->server_fd, SHUT_RDWR);
     close(srv->server_fd);
 
-    // Close client sockets to unblock client threads
+    // Close all client sockets to unblock client threads
     pthread_mutex_lock(&srv->lock);
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (srv->client_fds[i] != -1) {
@@ -211,10 +203,10 @@ void server_stop(Server* srv) {
     }
     pthread_mutex_unlock(&srv->lock);
 
-    // Wait for accept thread
+    /* Wait for accept thread */
     pthread_join(srv->accept_thread, NULL);
 
-    // Wait for client threads
+    // Wait for all client threads
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (srv->client_threads[i]) {
             pthread_join(srv->client_threads[i], NULL);
@@ -222,6 +214,7 @@ void server_stop(Server* srv) {
         }
     }
 }
+
 
 void server_start_async(Server* srv) {
     pthread_create(&srv->accept_thread, NULL, accept_thread, srv);
@@ -264,25 +257,3 @@ bool server_is_running(const Server* srv) {
     if (!srv) return false;
     return srv->running;
 }
-
-// bool server_add_client(Server* srv, int client_fd) {
-//     for (int i = 0; i < MAX_CLIENTS; i++) {
-//         if (srv->client_fds[i] == -1) {
-//             srv->client_fds[i] = client_fd;
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-//
-// void server_remove_client(Server* srv, int player_id) {
-//     if (player_id < 0 || player_id >= MAX_CLIENTS) return;
-//
-//     pthread_mutex_lock(&srv->lock);
-//     if (srv->client_fds[player_id] != -1) {
-//         shutdown(srv->client_fds[player_id], SHUT_RDWR);
-//         close(srv->client_fds[player_id]);
-//         srv->client_fds[player_id] = -1;
-//     }
-//     pthread_mutex_unlock(&srv->lock);
-// }
