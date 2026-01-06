@@ -18,10 +18,16 @@ static int renderer_total_width(const GameRenderer* gr) {
     return UI_PANEL_WIDTH + gr->window_width * gr->cell_size;
 }
 
-static void renderer_draw_scoreboard(
-    GameRenderer* gr,
-    const SerializedGameState* s
-) {
+static void renderer_draw_scoreboard(const GameRenderer* gr, const SerializedGameState* s) {
+    SDL_SetRenderDrawColor(gr->renderer, 30, 30, 30, 255);
+    SDL_Rect panel = {
+        0,
+        0,
+        UI_PANEL_WIDTH,
+        gr->window_height * gr->cell_size
+    };
+    SDL_RenderFillRect(gr->renderer, &panel);
+
     const int padding = 10;
     const int line_height = 24;
 
@@ -49,6 +55,42 @@ static void renderer_draw_scoreboard(
         renderer_draw_text(gr, line, x, y, color);
         y += line_height;
     }
+}
+
+static void renderer_draw_snakes(const GameRenderer *gr, const SerializedGameState *s) {
+    SDL_SetRenderDrawColor(gr->renderer, 0, 255, 0, 255);
+    for (int i = 0; i < s->num_snakes; i++) {
+        if (!s->snake_alive[i]) continue;
+
+        const SDL_Color color = renderer_generate_snake_color(i);
+        SDL_SetRenderDrawColor(gr->renderer, color.r, color.g, color.b, color.a);
+
+        for (int j = 0; j < s->snake_lengths[i]; j++) {
+            SDL_Rect r;
+            r.x = UI_PANEL_WIDTH + s->snake_x[i][j] * gr->cell_size;
+            r.y = s->snake_y[i][j] * gr->cell_size;
+            r.w = r.h = gr->cell_size;
+            SDL_RenderFillRect(gr->renderer, &r);
+        }
+    }
+}
+
+static void renderer_draw_player_score(const GameRenderer* gr, const int score) {
+    char text[32];
+    snprintf(text, sizeof text, "Score: %d", score);
+
+    const SDL_Color white = {255, 255, 255, 255};
+
+    const int padding = 10;
+    const int bottom_margin = 40;
+
+    renderer_draw_text(
+        gr,
+        text,
+        padding,
+        gr->window_height * gr->cell_size - bottom_margin,
+        white
+    );
 }
 
 GameRenderer* renderer_create(const char* title, int width, int height, int cell_size) {
@@ -193,7 +235,6 @@ void renderer_draw_grid(const GameRenderer* gr, const int width, const int heigh
 void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, const int snake_id, const bool client_connected) {
     if (!gr || !s) return;
 
-
     SDL_SetRenderDrawColor(gr->renderer, 0, 0, 0, 255);
     SDL_RenderClear(gr->renderer);
 
@@ -201,21 +242,7 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, co
     renderer_draw_grid(gr, gr->window_width, gr->window_height);
 
     // Draw snakes
-    SDL_SetRenderDrawColor(gr->renderer, 0, 255, 0, 255);
-    for (int i = 0; i < s->num_snakes; i++) {
-        if (!s->snake_alive[i]) continue;
-
-        const SDL_Color color = renderer_generate_snake_color(i);
-        SDL_SetRenderDrawColor(gr->renderer, color.r, color.g, color.b, color.a);
-
-        for (int j = 0; j < s->snake_lengths[i]; j++) {
-            SDL_Rect r;
-            r.x = UI_PANEL_WIDTH + s->snake_x[i][j] * gr->cell_size;
-            r.y = s->snake_y[i][j] * gr->cell_size;
-            r.w = r.h = gr->cell_size;
-            SDL_RenderFillRect(gr->renderer, &r);
-        }
-    }
+    renderer_draw_snakes(gr, s);
 
     // Draw fruit
     SDL_SetRenderDrawColor(gr->renderer, 255, 0, 0, 255);
@@ -227,28 +254,11 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, co
     };
     SDL_RenderFillRect(gr->renderer, &fr);
 
-    SDL_SetRenderDrawColor(gr->renderer, 30, 30, 30, 255);
-    SDL_Rect panel = {
-        0,
-        0,
-        UI_PANEL_WIDTH,
-        gr->window_height * gr->cell_size
-    };
-    SDL_RenderFillRect(gr->renderer, &panel);
-
+    // Scoreboard
     renderer_draw_scoreboard(gr, s);
 
     const int player_score = s->snake_scores[snake_id];
-    char score_text[32];
-    snprintf(score_text, sizeof(score_text), "Score: %d", player_score);
-    const SDL_Color white = {255, 255, 255, 255};
-    renderer_draw_text(
-    gr,
-    score_text,
-    10,
-    gr->window_height * gr->cell_size - 40,
-    white
-);
+    renderer_draw_player_score(gr, player_score);
 
     if (!s->snake_alive[snake_id] && !gr->overlay_active) {
         gr->overlay_active = true;
