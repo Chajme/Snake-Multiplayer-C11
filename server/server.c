@@ -15,6 +15,11 @@ typedef struct {
     int direction;
 } InputEvent;
 
+typedef struct {
+    Server* srv;
+    int idx;
+} ClientThreadData;
+
 struct Server {
     int port;
     int server_fd;
@@ -29,20 +34,12 @@ struct Server {
     Queue* input_queue;
 };
 
-typedef struct {
-    Server* srv;
-    int idx;
-} ClientThreadData;
-
-
-static void* client_thread_fn(void* arg) {
+static void* client_thread(void* arg) {
     ClientThreadData* ctx = arg;
 
     Server* srv = ctx->srv;
     int idx = ctx->idx;
     free(ctx);
-
-    // char buf[BUFFER_SIZE];
 
     printf("Client %d connected\n", idx);
 
@@ -65,12 +62,10 @@ static void* client_thread_fn(void* arg) {
     srv->client_fds[idx] = -1;
     pthread_mutex_unlock(&srv->lock);
 
-    // printf("Client %d disconnected\n", idx);
-
     return NULL;
 }
 
-static void* accept_thread_fn(void* arg) {
+static void* accept_thread(void* arg) {
     Server* srv = arg;
 
     while (srv->running) {
@@ -102,15 +97,19 @@ static void* accept_thread_fn(void* arg) {
         ctx->srv = srv;
         ctx->idx = idx;
 
-        pthread_create(&srv->client_threads[idx], NULL, client_thread_fn, ctx);
+        pthread_create(&srv->client_threads[idx], NULL, client_thread, ctx);
     }
 
     return NULL;
 }
 
-Server* server_create(const char* ip, int port) {
+Server* server_create(const char* ip, const int port) {
     Server* srv = calloc(1, sizeof(Server));
-    if (!srv) return NULL;
+    if (!srv) {
+        server_destroy(srv);
+        free(srv);
+        return NULL;
+    }
 
     srv->port = port;
     srv->running = true;
@@ -126,7 +125,7 @@ Server* server_create(const char* ip, int port) {
     srv->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (srv->server_fd < 0) {
         perror("socket");
-        free(srv);
+        server_destroy(srv);
         return NULL;
     }
 
@@ -136,20 +135,23 @@ Server* server_create(const char* ip, int port) {
 
     if (inet_pton(AF_INET, ip, &addr.sin_addr) <= 0) {
         perror("inet_pton");
-        free(srv);
+        server_destroy(srv);
         return NULL;
     }
 
     if (bind(srv->server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         perror("bind");
-        close(srv->server_fd);
+        // close(srv->server_fd);
+        server_destroy(srv);
         return NULL;
     }
 
     if (listen(srv->server_fd, MAX_CLIENTS) < 0) {
         perror("listen");
-        close(srv->server_fd);
+        // close(srv->server_fd);
+        server_destroy(srv);
         return NULL;
+
     }
 
     printf("Server listening on port %d\n", srv->port);
@@ -162,9 +164,11 @@ void server_destroy(Server* srv) {
 
     server_stop(srv);
 
-    /* Server must already be stopped */
+    // Server must already be stopped
     queue_free(srv->input_queue);
     pthread_mutex_destroy(&srv->lock);
+
+    srv->input_queue = NULL;
 
     free(srv);
 }
@@ -181,11 +185,11 @@ void server_stop(Server* srv) {
     srv->running = false;
     pthread_mutex_unlock(&srv->lock);
 
-    /* Unblock accept() */
+    // Unblock accept()
     shutdown(srv->server_fd, SHUT_RDWR);
     close(srv->server_fd);
 
-    /* Close all client sockets to unblock client threads */
+    // Close all client sockets to unblock client threads
     pthread_mutex_lock(&srv->lock);
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (srv->client_fds[i] != -1) {
@@ -199,7 +203,7 @@ void server_stop(Server* srv) {
     /* Wait for accept thread */
     pthread_join(srv->accept_thread, NULL);
 
-    /* Wait for all client threads */
+    // Wait for all client threads
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (srv->client_threads[i]) {
             pthread_join(srv->client_threads[i], NULL);

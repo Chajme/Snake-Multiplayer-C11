@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
 
     // Server* server = server_create(ip, port);
     Server* server = server_create("127.0.0.1", 1337);
+    if (!server) return 1;
     server_start_async(server);
 
     GameController* ctrl = game_controller_create(server, 60, 45);
