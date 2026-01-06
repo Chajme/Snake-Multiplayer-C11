@@ -14,6 +14,43 @@ struct GameRenderer {
     bool overlay_active;
 };
 
+static int renderer_total_width(const GameRenderer* gr) {
+    return UI_PANEL_WIDTH + gr->window_width * gr->cell_size;
+}
+
+static void renderer_draw_scoreboard(
+    GameRenderer* gr,
+    const SerializedGameState* s
+) {
+    const int padding = 10;
+    const int line_height = 24;
+
+    int x = padding;
+    int y = padding;
+
+    SDL_Color white = {255, 255, 255, 255};
+
+    renderer_draw_text(gr, "SCOREBOARD", x, y, white);
+    y += line_height + 5;
+
+    for (int i = 0; i < s->num_snakes; i++) {
+        SDL_Color color = renderer_generate_snake_color(i);
+
+        char line[64];
+        snprintf(
+            line,
+            sizeof(line),
+            "P%d: %d %s",
+            i,
+            s->snake_scores[i],
+            s->snake_alive[i] ? "" : "(DEAD)"
+        );
+
+        renderer_draw_text(gr, line, x, y, color);
+        y += line_height;
+    }
+}
+
 int renderer_init(GameRenderer** gr, const char* title, const int width, const int height, const int cell_size) {
     *gr = malloc(sizeof(GameRenderer));
     GameRenderer* r = *gr;
@@ -31,7 +68,7 @@ int renderer_init(GameRenderer** gr, const char* title, const int width, const i
     r->window = SDL_CreateWindow(title,
                                  SDL_WINDOWPOS_CENTERED,
                                  SDL_WINDOWPOS_CENTERED,
-                                 width * cell_size,
+                                 (width * cell_size) + UI_PANEL_WIDTH,
                                  height * cell_size,
                                  SDL_WINDOW_SHOWN);
     if (!r->window) {
@@ -73,7 +110,7 @@ void renderer_destroy(GameRenderer* gr) {
 }
 
 SDL_Color renderer_generate_snake_color(const int player_id) {
-    // A fixed palette of distinguishable colors
+    // Palette
     const SDL_Color palette[] = {
         {0, 255, 0, 255},    // green
         {0, 0, 255, 255},    // blue
@@ -87,7 +124,6 @@ SDL_Color renderer_generate_snake_color(const int player_id) {
 
     const int palette_size = sizeof(palette) / sizeof(palette[0]);
 
-    // Wrap around if player_id >= palette_size
     return palette[player_id % palette_size];
 }
 
@@ -114,26 +150,26 @@ void renderer_draw_game_over_overlay(const GameRenderer *gr, const int score) {
 
     const SDL_Rect overlay = {
         0, 0,
-        gr->window_width * gr->cell_size,
+        renderer_total_width(gr),
         gr->window_height * gr->cell_size
     };
     SDL_RenderFillRect(gr->renderer, &overlay);
 
-    // Hardcoded box
+    // Box
     SDL_SetRenderDrawColor(gr->renderer, 255, 255, 255, 255);
     const SDL_Rect box = {
         overlay.w / 4,
-        overlay.h / 2 - 40,  // roughly vertically centered
+        overlay.h / 2 - 40,
         overlay.w / 2,
-        125                    // height of the box
+        125
     };
     SDL_RenderDrawRect(gr->renderer, &box);
 
-    // Hardcoded text position
+    // Text position
     const SDL_Color white = {255, 255, 255, 255};
     renderer_draw_text(gr, "GAME OVER", overlay.w / 2 - 75, overlay.h / 2 - 16, white);
 
-    // Draw score below
+    // Draw score
     char score_text[32];
     snprintf(score_text, sizeof(score_text), "Score: %d", score);
     renderer_draw_text(gr, score_text, overlay.w / 2 - 50, overlay.h / 2 + 20, white);
@@ -142,52 +178,11 @@ void renderer_draw_game_over_overlay(const GameRenderer *gr, const int score) {
 void renderer_draw_grid(const GameRenderer* gr, const int width, const int height) {
     SDL_SetRenderDrawColor(gr->renderer, 50, 50, 50, 255); // dark gray
     for (int x = 0; x <= width; x++) {
-        SDL_RenderDrawLine(gr->renderer, x * gr->cell_size, 0, x * gr->cell_size, height * gr->cell_size);
+        SDL_RenderDrawLine(gr->renderer,UI_PANEL_WIDTH + x * gr->cell_size, 0, UI_PANEL_WIDTH + x * gr->cell_size, height * gr->cell_size);
     }
     for (int y = 0; y <= height; y++) {
-        SDL_RenderDrawLine(gr->renderer, 0, y * gr->cell_size, width * gr->cell_size, y * gr->cell_size);
+        SDL_RenderDrawLine(gr->renderer, UI_PANEL_WIDTH, y * gr->cell_size, UI_PANEL_WIDTH + width * gr->cell_size, y * gr->cell_size);
     }
-}
-
-void renderer_draw_game(GameRenderer* gr, GameState* state) {
-    if (!gr || !state) return;
-
-    SDL_SetRenderDrawColor(gr->renderer, 0, 0, 0, 255);
-    SDL_RenderClear(gr->renderer);
-
-    // Draw grid
-    renderer_draw_grid(gr, gr->window_width, gr->window_height);
-
-    // Draw snakes
-    SDL_SetRenderDrawColor(gr->renderer, 0, 255, 0, 255);
-    const int num = gamestate_get_num_snakes(state);
-    for (int i = 0; i < num; i++) {
-        const int len = gamestate_get_snake_length(state, i);
-        for (int j = 0; j < len; j++) {
-            SDL_Rect r;
-            r.x = gamestate_get_snake_segment_x(state, i, j) * gr->cell_size;
-            r.y = gamestate_get_snake_segment_y(state, i, j) * gr->cell_size;
-            r.w = r.h = gr->cell_size;
-            SDL_RenderFillRect(gr->renderer, &r);
-        }
-    }
-
-    // Draw fruit
-    SDL_SetRenderDrawColor(gr->renderer, 255, 0, 0, 255);
-    const SDL_Rect fr = {
-        gamestate_get_fruit_x(state) * gr->cell_size,
-        gamestate_get_fruit_y(state) * gr->cell_size,
-        gr->cell_size,
-        gr->cell_size
-    };
-    SDL_RenderFillRect(gr->renderer, &fr);
-
-    if (gamestate_is_game_over(state)) {
-        const int player_score = gamestate_get_snake_score(state, 0);
-        renderer_draw_game_over_overlay(gr, player_score);
-    }
-
-    SDL_RenderPresent(gr->renderer);
 }
 
 void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, const int snake_id, const bool client_connected) {
@@ -210,7 +205,7 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, co
 
         for (int j = 0; j < s->snake_lengths[i]; j++) {
             SDL_Rect r;
-            r.x = s->snake_x[i][j] * gr->cell_size;
+            r.x = UI_PANEL_WIDTH + s->snake_x[i][j] * gr->cell_size;
             r.y = s->snake_y[i][j] * gr->cell_size;
             r.w = r.h = gr->cell_size;
             SDL_RenderFillRect(gr->renderer, &r);
@@ -220,23 +215,40 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, co
     // Draw fruit
     SDL_SetRenderDrawColor(gr->renderer, 255, 0, 0, 255);
     const SDL_Rect fr = {
-        s->fruit_x * gr->cell_size,
+        UI_PANEL_WIDTH + s->fruit_x * gr->cell_size,
         s->fruit_y * gr->cell_size,
         gr->cell_size,
         gr->cell_size
     };
     SDL_RenderFillRect(gr->renderer, &fr);
 
-    const int player_score = s->snake_scores[snake_id]; // Skóre hráča
+    SDL_SetRenderDrawColor(gr->renderer, 30, 30, 30, 255);
+    SDL_Rect panel = {
+        0,
+        0,
+        UI_PANEL_WIDTH,
+        gr->window_height * gr->cell_size
+    };
+    SDL_RenderFillRect(gr->renderer, &panel);
+
+    renderer_draw_scoreboard(gr, s);
+
+    const int player_score = s->snake_scores[snake_id];
     char score_text[32];
     snprintf(score_text, sizeof(score_text), "Score: %d", player_score);
     const SDL_Color white = {255, 255, 255, 255};
-    renderer_draw_text(gr, score_text, gr->window_width, 20, white);
+    renderer_draw_text(
+    gr,
+    score_text,
+    10,
+    gr->window_height * gr->cell_size - 40,
+    white
+);
 
     if (!s->snake_alive[snake_id] && !gr->overlay_active) {
-        gr->overlay_active = true; // activate overlay once
+        gr->overlay_active = true;
     } else if (s->snake_alive[snake_id]) {
-        gr->overlay_active = false; // new snake spawned, hide overlay
+        gr->overlay_active = false;
     }
 
     // in render
@@ -248,7 +260,6 @@ void renderer_draw_serialized(GameRenderer* gr, const SerializedGameState* s, co
         renderer_draw_server_shutdown_message(gr);
     }
 
-
     SDL_RenderPresent(gr->renderer);
 }
 
@@ -258,27 +269,27 @@ void renderer_draw_server_shutdown_message(const GameRenderer* gr) {
 
     const SDL_Rect overlay = {
         0, 0,
-        gr->window_width * gr->cell_size,
+        renderer_total_width(gr),
         gr->window_height * gr->cell_size
     };
     SDL_RenderFillRect(gr->renderer, &overlay);
 
-    // Draw a box
+    // Box
     SDL_SetRenderDrawColor(gr->renderer, 255, 255, 255, 255);
     const SDL_Rect box = {
         overlay.w / 4,
-        overlay.h / 2 - 40,  // roughly vertically centered
+        overlay.h / 2 - 40,
         overlay.w / 2,
-        125                    // height of the box
+        125
     };
     SDL_RenderDrawRect(gr->renderer, &box);
 
-    // Draw the "SERVER SHUTDOWN" text
+    // "SERVER SHUTDOWN" text
     const SDL_Color white = {255, 255, 255, 255};
     renderer_draw_text(gr, "SERVER SHUTDOWN", overlay.w / 2 - 100, overlay.h / 2 - 16, white);
 
-    // Draw the score (this can be modified to suit your needs)
+    // Score
     char score_text[32];
-    snprintf(score_text, sizeof(score_text), "Score: %d", 0);  // You can update the score as needed
+    snprintf(score_text, sizeof(score_text), "Score: %d", 0);
     renderer_draw_text(gr, score_text, overlay.w / 2 - 50, overlay.h / 2 + 20, white);
 }
