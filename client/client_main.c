@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
     // Client* client = client_create(ip, port, 60, 45, 20);
     Client* client = client_create("127.0.0.1", 1337, 60, 45, 20);
     if (!client) {
-        client_destroy(client);
+        // client_destroy(client);
         return -1;
     }
 

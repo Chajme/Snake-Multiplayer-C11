@@ -25,18 +25,20 @@ struct Client {
 void client_destroy(Client* c) {
     if (!c) return;
     if (c->renderer) renderer_destroy(c->renderer);
-    if (c->connected) close(c->sock);
+    if (c->sock) close(c->sock);
     free(c);
 }
 
 Client* client_create(const char* ip, int port, int width, int height, int cell_size) {
-    Client* c = malloc(sizeof(Client));
-    if (!c) return NULL;
+    Client* c = calloc(1, sizeof(Client));
+    if (!c) {
+        // client_destroy(c);
+        return NULL;
+    }
 
     c->sock = socket(AF_INET, SOCK_STREAM, 0);
     c->connected = false;
     if (c->sock < 0) {
-        // free(c);
         client_destroy(c);
         return NULL;
     }
@@ -56,8 +58,6 @@ Client* client_create(const char* ip, int port, int width, int height, int cell_
     AssignPlayerMsg msg;
     if (recv(c->sock, &msg, sizeof(msg), 0) != sizeof(msg)) {
         fprintf(stderr, "Failed to receive player ID\n");
-        // close(c->sock);
-        // free(c);
         client_destroy(c);
         return NULL;
     }
