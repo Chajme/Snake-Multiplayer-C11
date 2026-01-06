@@ -29,7 +29,7 @@ static void renderer_draw_scoreboard(const GameRenderer* gr, const SerializedGam
     SDL_RenderFillRect(gr->renderer, &panel);
 
     const int padding = 10;
-    const int line_height = 24;
+    const int line_height = 35;
 
     int x = padding;
     int y = padding;
@@ -37,7 +37,7 @@ static void renderer_draw_scoreboard(const GameRenderer* gr, const SerializedGam
     SDL_Color white = {255, 255, 255, 255};
 
     renderer_draw_text(gr, "SCOREBOARD", x, y, white);
-    y += line_height + 10;
+    y += line_height + 20;
 
     for (int i = 0; i < s->num_snakes; i++) {
         SDL_Color color = renderer_generate_snake_color(i);
