@@ -3,7 +3,7 @@ project(snake_game C)
 
 set(CMAKE_C_STANDARD 11)
 
-# Shared sources for the game logic
+# Game Sources
 set(GAME_SOURCES
         util/queue.c
         util/vector.c
@@ -14,20 +14,18 @@ set(GAME_SOURCES
         server/server.c
 )
 
-# Singleplayer executable
-add_executable(game
-        ${GAME_SOURCES}
-        client/gui/game_render.c
-        sdl_leak_test.c           # your singleplayer main
+# SDL LEAK TEST
+add_executable(sdl_leak_test
+        sdl_leak_test.c
 )
 
-# Server executable (no SDL needed)
+# Server
 add_executable(server
         ${GAME_SOURCES}
         server/server_main.c
 )
 
-# Client executable (GUI)
+# Client
 add_executable(client
         ${GAME_SOURCES}
         client/gui/game_render.c
@@ -40,9 +38,9 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2 REQUIRED sdl2)
 pkg_check_modules(SDL2_TTF REQUIRED SDL2_ttf)
 
-# Include directories
-target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS})
-target_link_libraries(game PRIVATE ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES})
+# Includes
+target_include_directories(sdl_leak_test PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS})
+target_link_libraries(sdl_leak_test PRIVATE ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES})
 
 target_include_directories(client PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS})
 target_link_libraries(client PRIVATE ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARIES})
