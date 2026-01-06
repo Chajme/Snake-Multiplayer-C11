@@ -6,7 +6,6 @@
 
 #define INITIAL_CAPACITY 4
 
-/* Full Vector struct is private to vector.c */
 struct Vector {
     void *data;
     size_t size;
@@ -17,7 +16,6 @@ struct Vector {
     vec_destroy destroy;
 };
 
-/* Internal functions */
 static int vector_init(Vector *v, size_t elem_size,
                        vec_copy copy, vec_destroy destroy)
 {
@@ -43,7 +41,6 @@ static int vector_resize(Vector *v, size_t new_capacity)
     return 1;
 }
 
-/* Public OOP-style constructor */
 Vector* vector_new(size_t elem_size, vec_copy copy, vec_destroy destroy)
 {
     Vector *v = malloc(sizeof(Vector));
@@ -55,7 +52,6 @@ Vector* vector_new(size_t elem_size, vec_copy copy, vec_destroy destroy)
     return v;
 }
 
-/* Public OOP-style destructor */
 void vector_free(Vector* v)
 {
     if (!v) return;
@@ -71,7 +67,6 @@ void vector_free(Vector* v)
     free(v);
 }
 
-/* API */
 int vector_push_back(Vector *v, const void *elem)
 {
     if (!v || !elem) return 0;
@@ -96,7 +91,8 @@ void *vector_get(Vector *v, size_t index)
 
 size_t vector_get_size(const Vector *v)
 {
-    return v ? v->size : 0;
+    if (!v) return 0;
+    return v->size;
 }
 
 void vector_clear(Vector *v)

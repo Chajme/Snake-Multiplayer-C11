@@ -4,15 +4,14 @@
 #include <string.h>
 
 struct Queue {
-    void *data;          // element storage
-    size_t elem_size;    // size of each element
-    size_t capacity;     // max elements
-    size_t front;        // index of first element
-    size_t back;         // index of next free slot
-    size_t size;         // current number of elements
+    void *data;
+    size_t elem_size;
+    size_t capacity;
+    size_t front;
+    size_t back;
+    size_t size;
 };
 
-// Factory-style constructor
 Queue* queue_new(size_t elem_size, size_t capacity) {
     if (elem_size == 0 || capacity == 0) return NULL;
 
@@ -36,25 +35,30 @@ Queue* queue_new(size_t elem_size, size_t capacity) {
 
 void queue_free(Queue *q) {
     if (!q) return;
+
     free(q->data);
     free(q);
 }
 
 int queue_push(Queue *q, const void *elem) {
-    if (!q || !elem || q->size == q->capacity) return 0; // full
+    if (!q || !elem || q->size == q->capacity) return 0;
+
     void *target = (char*)q->data + q->back * q->elem_size;
     memcpy(target, elem, q->elem_size);
     q->back = (q->back + 1) % q->capacity;
     q->size++;
+
     return 1;
 }
 
 int queue_pop(Queue *q, void *out_elem) {
-    if (!q || !out_elem || q->size == 0) return 0; // empty
+    if (!q || !out_elem || q->size == 0) return 0;
+
     void *source = (char*)q->data + q->front * q->elem_size;
     memcpy(out_elem, source, q->elem_size);
     q->front = (q->front + 1) % q->capacity;
     q->size--;
+
     return 1;
 }
 
