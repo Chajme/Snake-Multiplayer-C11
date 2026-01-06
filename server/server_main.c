@@ -1,5 +1,6 @@
 #include "server.h"
 #include "game_controller.h"
+
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,11 +16,11 @@ static void on_sigint(int sig) {
 static int parse_arguments(int argc, char* argv[], char* out_ip, const size_t ip_len, int* out_port) {
     if (argc < 3) {
         fprintf(stderr, "Usage: %s <bind_ip> <port>\n", argv[0]);
-        return 0; // failure
+        return 0;
     }
 
     strncpy(out_ip, argv[1], ip_len - 1);
-    out_ip[ip_len - 1] = '\0'; // ensure null-terminated
+    out_ip[ip_len - 1] = '\0';
 
     *out_port = atoi(argv[2]);
     if (*out_port <= 0 || *out_port > 65535) {

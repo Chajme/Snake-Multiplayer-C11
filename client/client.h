@@ -1,6 +1,6 @@
-
 #ifndef SNAKEGAME_CLIENT_H
 #define SNAKEGAME_CLIENT_H
+
 #include <SDL_events.h>
 #include <stdbool.h>
 

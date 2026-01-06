@@ -51,7 +51,6 @@ static void process_inputs(const GameController* c) {
             game_spawn_player(c->game, player);
 
         }
-
         // Set direction
         game_snake_set_direction(c->game, player, dir);
 

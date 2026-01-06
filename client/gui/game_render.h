@@ -1,9 +1,9 @@
 #ifndef SNAKEGAME_RENDER_H
 #define SNAKEGAME_RENDER_H
 
-#include <SDL_pixels.h>
-
 #include "../../common/game_protocol.h"
+
+#include <SDL_pixels.h>
 
 #define UI_PANEL_WIDTH 200
 

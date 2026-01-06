@@ -28,7 +28,7 @@ Snake* game_spawn_player(Game* g, int player_idx);
 
 // Getters
 int game_get_width(const Game *g);
-int game_get_heigth(const Game *g);
+int game_get_height(const Game *g);
 int game_is_over(const Game* g);
 
 // Gamestate - read-only

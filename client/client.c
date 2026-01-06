@@ -1,4 +1,3 @@
-
 #include "client.h"
 
 #include <SDL_ttf.h>

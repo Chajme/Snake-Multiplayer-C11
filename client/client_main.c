@@ -1,8 +1,8 @@
+#include "client.h"
+
 #include <SDL_events.h>
 #include <SDL_timer.h>
 #include <stdbool.h>
-
-#include "client.h"
 
 int main(int argc, char* argv[]) {
     // if (argc < 3) {

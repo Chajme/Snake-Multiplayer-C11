@@ -141,14 +141,12 @@ Server* server_create(const char* ip, const int port) {
 
     if (bind(srv->server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         perror("bind");
-        // close(srv->server_fd);
         server_destroy(srv);
         return NULL;
     }
 
     if (listen(srv->server_fd, MAX_CLIENTS) < 0) {
         perror("listen");
-        // close(srv->server_fd);
         server_destroy(srv);
         return NULL;
 

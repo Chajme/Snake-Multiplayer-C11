@@ -1,4 +1,3 @@
-
 #include "game.h"
 #include "../../common/game_protocol.h"
 #include "../../util/vector.h"
@@ -24,14 +23,13 @@ struct Game {
     int width;
     int height;
 
-    Vector* snakes; // Vector of Snake*
+    Vector* snakes;
     Fruit* fruit;
     GameState state;
 };
 
-/* Destroy callback for vector: just call snake_destroy */
 static void snake_ptr_destroy(void* elem) {
-    Snake* s = *(Snake**)elem;  // Vector stores pointer, so elem is Snake**
+    Snake* s = *(Snake**)elem;
     if (s) snake_destroy(s);
 }
 
@@ -99,7 +97,7 @@ Game* game_create(int width, int height) {
 void game_destroy(Game* g) {
     if (!g) return;
 
-    vector_free(g->snakes); // auto calls snake_destroy
+    vector_free(g->snakes);
     fruit_destroy(g->fruit);
     free(g);
 }
@@ -119,13 +117,12 @@ void game_player_reconnect(Game* g, int idx) {
     *sptr = snake_create(2 + idx * 3, 2 + idx * 2);
     snake_set_alive(*sptr, true);
 
-    g->state.game_over = 0;   // IMPORTANT
+    g->state.game_over = 0;
 }
 
 Snake* game_spawn_player(Game* g, int player_idx) {
     if (!g || player_idx < 0 || player_idx >= MAX_SNAKES) return NULL;
 
-    // Ensure the internal vector is large enough
     while ((int)vector_get_size(g->snakes) <= player_idx) {
         Snake* null_snake = NULL;
         vector_push_back(g->snakes, &null_snake);
@@ -139,13 +136,11 @@ Snake* game_spawn_player(Game* g, int player_idx) {
     *sptr = snake_create(2 + player_idx * 3, 2 + player_idx * 2);
     snake_set_alive(*sptr, true);
 
-    // Reset game_over if needed
     g->state.game_over = 0;
 
     return *sptr;
 }
 
-/* --- Add snake --- */
 Snake* game_add_snake(Game* g, int start_x, int start_y) {
     if (!g) return NULL;
 
@@ -155,7 +150,6 @@ Snake* game_add_snake(Game* g, int start_x, int start_y) {
     return s;
 }
 
-/* --- Reset snake at index --- */
 Snake* game_reset_snake(Game* g, int idx) {
     if (!g) return NULL;
     if (idx < 0 || idx >= (int)vector_get_size(g->snakes)) return NULL;
@@ -170,22 +164,24 @@ Snake* game_reset_snake(Game* g, int idx) {
     return *sptr;
 }
 
-/* --- Set snake dead/alive --- */
 void game_set_snake_dead(Game* g, int idx) {
     if (!g || idx < 0 || idx >= (int)vector_get_size(g->snakes)) return;
+
     Snake** sptr = vector_get(g->snakes, idx);
     if (!sptr || !*sptr) return;
+
     snake_set_alive(*sptr, false);
 }
 
 void game_set_snake_alive(Game* g, int idx) {
     if (!g || idx < 0 || idx >= (int)vector_get_size(g->snakes)) return;
+
     Snake** sptr = vector_get(g->snakes, idx);
     if (!sptr || !*sptr) return;
+
     snake_set_alive(*sptr, true);
 }
 
-/* --- Set direction --- */
 void game_snake_set_direction(Game* g, int snake_idx, int direction) {
     if (!g || snake_idx < 0 || snake_idx >= (int)vector_get_size(g->snakes)) return;
 
@@ -240,7 +236,7 @@ int game_get_width(const Game *g) {
     return g->width;
 }
 
-int game_get_heigth(const Game *g) {
+int game_get_height(const Game *g) {
     if (!g) return 0;
     return g->height;
 }

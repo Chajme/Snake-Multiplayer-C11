@@ -27,12 +27,11 @@ Snake* snake_create(int startX, int startY) {
 
     vector_push_back(s->segments, &head);
 
-    // initial length = 3
     for (int i = 1; i < 3; i++) {
         vector_push_back(s->segments, &head);
     }
 
-    s->direction = 1;   // napr. doprava
+    s->direction = 1;
     s->score = 0;
     s->alive = true;
     return s;
@@ -49,7 +48,6 @@ void snake_move(Snake* s, int width, int height) {
 
     size_t len = vector_get_size(s->segments);
 
-    // shift segments tail → head
     for (size_t i = len - 1; i > 0; i--) {
         Segment *curr = vector_get(s->segments, i);
         Segment *prev = vector_get(s->segments, i - 1);
@@ -63,9 +61,9 @@ void snake_move(Snake* s, int width, int height) {
         case 1: head->x++; break;
         case 2: head->y++; break;
         case 3: head->x--; break;
+        default: ;
     }
 
-    // wrap-around
     if (head->x < 0) head->x = width - 1;
     if (head->x >= width) head->x = 0;
     if (head->y < 0) head->y = height - 1;
@@ -85,12 +83,11 @@ void snake_grow(Snake* s) {
 void snake_set_direction(Snake* s, int direction) {
     if (!s) return;
 
-    // Prevent 180° turn
     if ((s->direction == 0 && direction == 2) ||
         (s->direction == 2 && direction == 0) ||
         (s->direction == 1 && direction == 3) ||
         (s->direction == 3 && direction == 1)) {
-        return; // ignore
+        return;
         }
 
     s->direction = direction;
@@ -141,12 +138,14 @@ int snake_get_score(const Snake* s) {
 
 int snake_get_segment_x(const Snake *s, int segment) {
     Segment *seg = vector_get(s->segments, segment);
-    return seg ? seg->x : 0;
+    if (!seg) return 0;
+    return seg->x;
 }
 
 int snake_get_segment_y(const Snake *s, int segment) {
     Segment *seg = vector_get(s->segments, segment);
-    return seg ? seg->y : 0;
+    if (!seg) return 0;
+    return seg->y;
 }
 
 bool snake_is_alive(const Snake* s) {
