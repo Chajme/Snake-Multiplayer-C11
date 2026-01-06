@@ -9,7 +9,7 @@
 
 typedef struct GameRenderer GameRenderer;
 
-int renderer_init(GameRenderer** gr, const char* title, int width, int height, int cell_size);
+GameRenderer* renderer_create(const char* title, int width, int height, int cell_size);
 void renderer_destroy(GameRenderer* gr);
 
 SDL_Color renderer_generate_snake_color(int player_id);

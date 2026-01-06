@@ -35,7 +35,11 @@ Client* client_create(const char* ip, int port, int width, int height, int cell_
 
     c->sock = socket(AF_INET, SOCK_STREAM, 0);
     c->connected = false;
-    if (c->sock < 0) { free(c); return NULL; }
+    if (c->sock < 0) {
+        // free(c);
+        client_destroy(c);
+        return NULL;
+    }
 
     struct sockaddr_in addr = {0};
     addr.sin_family = AF_INET;
@@ -44,8 +48,7 @@ Client* client_create(const char* ip, int port, int width, int height, int cell_
 
     if (connect(c->sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         perror("connect");
-        close(c->sock);
-        free(c);
+        client_destroy(c);
         return NULL;
     }
 
@@ -53,8 +56,9 @@ Client* client_create(const char* ip, int port, int width, int height, int cell_
     AssignPlayerMsg msg;
     if (recv(c->sock, &msg, sizeof(msg), 0) != sizeof(msg)) {
         fprintf(stderr, "Failed to receive player ID\n");
-        close(c->sock);
-        free(c);
+        // close(c->sock);
+        // free(c);
+        client_destroy(c);
         return NULL;
     }
 
@@ -67,7 +71,8 @@ Client* client_create(const char* ip, int port, int width, int height, int cell_
     c->cell_size = cell_size;
     c->renderer = NULL;
 
-    renderer_init(&c->renderer, "Snake Multiplayer", width, height, cell_size);
+    // renderer_init(&c->renderer, "Snake Multiplayer", width, height, cell_size);
+    c->renderer = renderer_create("Snake Multiplayer", width, height, cell_size);
     if (!c->renderer) {
         fprintf(stderr, "Renderer init failed\n");
         client_destroy(c);

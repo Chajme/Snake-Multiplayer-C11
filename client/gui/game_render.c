@@ -31,7 +31,7 @@ static void renderer_draw_scoreboard(
     SDL_Color white = {255, 255, 255, 255};
 
     renderer_draw_text(gr, "SCOREBOARD", x, y, white);
-    y += line_height + 5;
+    y += line_height + 10;
 
     for (int i = 0; i < s->num_snakes; i++) {
         SDL_Color color = renderer_generate_snake_color(i);
@@ -51,59 +51,64 @@ static void renderer_draw_scoreboard(
     }
 }
 
-int renderer_init(GameRenderer** gr, const char* title, const int width, const int height, const int cell_size) {
-    *gr = malloc(sizeof(GameRenderer));
-    GameRenderer* r = *gr;
+GameRenderer* renderer_create(const char* title, int width, int height, int cell_size) {
+    GameRenderer* gr = calloc(1, sizeof(GameRenderer));
+    if (!gr) return NULL;
 
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        renderer_destroy(*gr);
-        return -1;
+        renderer_destroy(gr);
+        return NULL;
     }
 
     if (TTF_Init() != 0) {
-        renderer_destroy(*gr);
-        return -1;
+        renderer_destroy(gr);
+        return NULL;
     }
 
-    r->window = SDL_CreateWindow(title,
-                                 SDL_WINDOWPOS_CENTERED,
-                                 SDL_WINDOWPOS_CENTERED,
-                                 (width * cell_size) + UI_PANEL_WIDTH,
-                                 height * cell_size,
-                                 SDL_WINDOW_SHOWN);
-    if (!r->window) {
-        renderer_destroy(*gr);
-        return -1;
+    gr->window = SDL_CreateWindow(
+        title,
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        UI_PANEL_WIDTH + width * cell_size,
+        height * cell_size,
+        SDL_WINDOW_SHOWN
+    );
+    if (!gr->window) {
+        renderer_destroy(gr);
+        return NULL;
     }
 
-    r->renderer = SDL_CreateRenderer(r->window, -1, SDL_RENDERER_ACCELERATED);
-    if (!r->renderer) {
-        renderer_destroy(*gr);
-        return -1;
+    gr->renderer = SDL_CreateRenderer(gr->window, -1, SDL_RENDERER_ACCELERATED);
+    if (!gr->renderer) {
+        renderer_destroy(gr);
+        return NULL;
     }
 
-    r->cell_size = cell_size;
-    r->window_width = width;
-    r->window_height = height;
-    r->overlay_active = false;
+    gr->font = TTF_OpenFont(
+        "../client/gui/font/PlayfulTime-BLBB8.ttf",
+        32
+    );
 
-    // Load font
-    r->font = TTF_OpenFont("../client/gui/font/PlayfulTime-BLBB8.ttf", 32);
-    if (!r->font) {
-        fprintf(stderr, "TTF_OpenFont failed: %s\n", TTF_GetError());
-        renderer_destroy(*gr);
-        return -1;
+    if (!gr->font) {
+        renderer_destroy(gr);
+        return NULL;
     }
 
-    return 0;
+    gr->cell_size = cell_size;
+    gr->window_width = width;
+    gr->window_height = height;
+    gr->overlay_active = false;
+
+    return gr;
 }
 
 void renderer_destroy(GameRenderer* gr) {
     if (!gr) return;
 
-    TTF_CloseFont(gr->font);
-    SDL_DestroyRenderer(gr->renderer);
-    SDL_DestroyWindow(gr->window);
+    if (gr->font) TTF_CloseFont(gr->font);
+    if (gr->renderer) SDL_DestroyRenderer(gr->renderer);
+    if (gr->window) SDL_DestroyWindow(gr->window);
+
     TTF_Quit();
     SDL_Quit();
     free(gr);

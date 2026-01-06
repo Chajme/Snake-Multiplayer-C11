@@ -85,20 +85,20 @@ int main(void) {
         SDL_DestroyWindow(window);
     }
 
-    // Create a font
-    TTF_Font *font = TTF_OpenFont("../client/gui/font/PlayfulTime-BLBB8.ttf", 24);  // Replace with a valid path
+    // Create font
+    TTF_Font *font = TTF_OpenFont("../client/gui/font/PlayfulTime-BLBB8.ttf", 24);
     if (!font) {
         fprintf(stderr, "TTF_OpenFont failed: %s\n", TTF_GetError());
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
     }
 
-    // Simulate rendering something (you can skip this part if you just want to test leaks)
+    // Rendering
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 
-    // Cleanup: Destroy renderer, window, and font
+    // Destroy
     TTF_CloseFont(font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
